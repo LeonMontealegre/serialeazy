@@ -4,18 +4,21 @@ import {serialize, serializable, Serialize, Deserialize} from "../src/Serializer
 
 describe("Test 1", () => {
     test("1", () => {
-        @serializable class C {
+        @serializable("C")
+        class C {
             @serialize tag: string;
 
             doThing(): string {
                 return "C " + this.tag;
             }
         }
-        @serializable class A {
+        @serializable("A")
+        class A {
             @serialize tag: string;
             @serialize connection: C;
         }
-        @serializable class B {
+        @serializable("B")
+        class B {
             @serialize a1: A;
             @serialize a2: A;
         }
@@ -46,10 +49,12 @@ describe("Test 1", () => {
         expect(c_copy.doThing()).toEqual(c.doThing());
     });
     test("2", () => {
-        @serializable class Test {
+        @serializable("Test")
+        class Test {
             @serialize things: any[];
         }
-        @serializable class Obj {
+        @serializable("Obj")
+        class Obj {
             @serialize tag: string;
         }
 
@@ -78,10 +83,12 @@ describe("Test 1", () => {
         expect(t_copy.things[7]).toEqual(t_copy.things[2]);
     })
     test("3", () => {
-        @serializable class Test2 {
+        @serializable("Test2")
+        class Test2 {
             @serialize child: Test3;
         }
-        @serializable class Test3 {
+        @serializable("Test3")
+        class Test3 {
             @serialize parent: Test2;
         }
 
@@ -95,17 +102,20 @@ describe("Test 1", () => {
 
         expect(t2_copy.child.parent).toBe(t2_copy);
     });
-    test("3", () => {
-        @serializable class Root {
+    test("4", () => {
+        @serializable("Root")
+        class Root {
             @serialize name: string;
             @serialize root: Node;
         }
-        @serializable class Node {
+        @serializable("Node")
+        class Node {
             @serialize root: Root;
             @serialize tag: string;
             @serialize connections: Connection[];
         }
-        @serializable class Connection {
+        @serializable("Connection")
+        class Connection {
             @serialize tag: string;
             @serialize input: Node;
             @serialize output: Node;
@@ -157,5 +167,61 @@ describe("Test 1", () => {
         expect(inspect(root, {colors: true, depth: 15})).toEqual(inspect(root_copy, {colors: true, depth: 15}));
 
         expect(1).toEqual(1);
+    });
+    test("5", () => {
+        @serializable("Test5")
+        class Test5 {
+            @serialize things: Set<any>;
+        }
+
+        const s = new Set<any>();
+        s.add(5);
+        s.add("S");
+        s.add(new Set<any>([1,2,3,4]));
+        s.add(["i", "am", "Array"]);
+        s.add(123);
+
+        const t = new Test5();
+        t.things = s;
+
+        const str = Serialize(t);
+        const t_copy = Deserialize<Test5>(str);
+
+        const s1 = Array.from(t.things);
+        const s2 = Array.from(t_copy.things);
+
+        expect(s2).toHaveLength(s1.length);
+        expect(t_copy.things).toBeInstanceOf(Set);
+        expect(s2[0]).toEqual(s1[0]);
+        expect(s2[1]).toEqual(s1[1]);
+        expect(s2[4]).toEqual(s1[4]);
+
+        expect(s2[2]).toBeInstanceOf(Set);
+        expect(s2[2].size).toEqual(s1[2].size);
+
+        expect(s2[3]).toBeInstanceOf(Array);
+        expect(s2[3]).toHaveLength(s1[3].length);
+    });
+    test("6", () => {
+        @serializable("Test6")
+        class Test6 {
+            @serialize arr: Array<any>;
+        }
+
+        const a = [1,2,3,4];
+
+        const t = new Test6();
+        t.arr = [5, "asd", a, [5,5,6,7], a];
+
+        const str = Serialize(t);
+        const t_copy = Deserialize<Test6>(str);
+
+        expect(t_copy.arr).toHaveLength(t.arr.length);
+        expect(t_copy.arr[0]).toEqual(t.arr[0]);
+        expect(t_copy.arr[1]).toEqual(t.arr[1]);
+        expect(t_copy.arr[2]).toEqual(t.arr[2]);
+        expect(t_copy.arr[3]).toEqual(t.arr[3]);
+        expect(t_copy.arr[4]).toEqual(t.arr[4]);
+        expect(t_copy.arr[2]).toBe(t_copy.arr[4]);
     });
 })

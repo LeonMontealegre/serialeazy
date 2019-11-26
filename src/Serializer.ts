@@ -3,13 +3,32 @@ import "reflect-metadata";
 const VERBOSE = false;
 
 const propsKey = Symbol("__SERIALIZE_PROPS");
+const uuidKey = Symbol("__UUID__");
 const typeKey = "type";
 const dataKey = "data";
 
-const serializableObjects = new Map<string, new () => Object>();
+type serializeProperties = [new () => Object, [(obj: any, refs: Map<Object, string>, root: any) => any,
+                                               (obj: any, refs: Map<string, Object>, root: any) => any]];
+
+const serializableObjects = new Map<string, serializeProperties>();
 
 // /** Add built-in objects as serializable */
-// serializable(Array);
+serializable("Array", [
+    (obj: Array<any>, refs: Map<Object, string>, root: any) => {
+        return obj.map((v) => serializeProp(v, refs, root));
+    },
+    (obj: Array<any>, refs: Map<string, Object>, root: any) => {
+        return obj.map((v) => deserializeProp(v, refs, root));
+    }]
+)(Array);
+serializable("Set", [
+    (obj: Set<any>, refs: Map<Object, string>, root: any) => {
+        return Array.from(obj).map((v) => serializeProp(v, refs, root));
+    },
+    (obj: Array<any>, refs: Map<string, Object>, root: any) => {
+        return new Set(obj.map((v) => deserializeProp(v, refs, root)));
+    }]
+)(Set);
 // /*****************************************/
 
 export function Serialize(obj: Object): string {
@@ -31,16 +50,14 @@ function serializeProp(prop: any, refs: Map<Object, string>, root: any): any {
     if (serial(prop, refs, root))
         return { "ref": refs.get(prop) }
 
-    if (prop instanceof Array)
-        return prop.map((prop2: any) => serializeProp(prop2, refs, root));
-
     // TODO: add check for maps/sets/other built-ins
     throw new Error("Unknown property! " + prop);
 }
 
 function serial(obj: Object, refs: Map<Object, string>, root: any): boolean {
+    const uuid = Reflect.getMetadata(uuidKey, obj.constructor.prototype);
     // if it's an unknown type, then we can't serialize it
-    if (!serializableObjects.has(obj.constructor.name))
+    if (!uuid)
         return false;
     // if we've already serialized the object then ignore
     if (refs.has(obj))
@@ -48,56 +65,66 @@ function serial(obj: Object, refs: Map<Object, string>, root: any): boolean {
     refs.set(obj, ""+refs.size);
 
     const newObj = {};
-    newObj[typeKey] = obj.constructor.name;
+    newObj[typeKey] = uuid;
     newObj[dataKey] = {};
 
-    const keys = Reflect.getMetadata(propsKey, obj);
-    keys.forEach((key: string) => {
-        newObj[dataKey][key] = serializeProp(obj[key], refs, root);
-    });
+    // if custom serialization then use that
+    if (serializableObjects.get(uuid)[1]) {
+        newObj[dataKey] = serializableObjects.get(uuid)[1][0](obj, refs, root);
+    } else {
+        // otherwise go through each key and serialize it
+        const keys = Reflect.getMetadata(propsKey, obj);
+        keys.forEach((key: string) => {
+            newObj[dataKey][key] = serializeProp(obj[key], refs, root);
+        });
+    }
 
     root[refs.get(obj)] = newObj;
     return true;
-}
-
-function construct(type: string): Object {
-    return new (serializableObjects.get(type))();
 }
 
 function deserializeProp(prop: any, refs: Map<string, Object>, root: any): any {
     if (!(prop instanceof Object))
         return prop;
 
-    if (prop instanceof Array)
-        return prop.map((prop2) => deserializeProp(prop2, refs, root));
-
     // reference
     const refNum = prop["ref"];
     if (deserial(refNum, refs, root))
         return refs.get(refNum);
 
-    // TODO: add check for maps/sets/other built-ins
+    // TODO: add check for sets/other built-ins
     throw new Error("Unknown property! " + prop);
 }
 
+function construct(uuid: string): Object {
+    return new (serializableObjects.get(uuid)[0])();
+}
+
 function deserial(num: string, refs: Map<string, Object>, root: any): boolean {
+    // check if we already deserialized the given obj
     if (refs.has(num))
         return true;
 
     // if it's an unknown type, then we can't deserialize it
-    const type = root[num][typeKey];
-    if (!serializableObjects.has(type))
+    const uuid = root[num][typeKey];
+    if (!serializableObjects.has(uuid))
         return false;
 
-    // construct object and set it in map
-    const obj = construct(type);
-    refs.set(num, obj);
+    // custom deserialization
+    if (serializableObjects.get(uuid)[1]) {
+        const obj = serializableObjects.get(uuid)[1][1](root[num][dataKey], refs, root);
+        refs.set(num, obj);
+    } else {
+        // construct object and set it in map
+        const obj = construct(uuid);
+        refs.set(num, obj);
 
-    const data = root[num][dataKey];
-    for (const key in data) {
-        if (key == typeKey)
-            continue;
-        obj[key] = deserializeProp(data[key], refs, root);
+        const data = root[num][dataKey];
+        for (const key in data) {
+            if (key == typeKey)
+                continue;
+            obj[key] = deserializeProp(data[key], refs, root);
+        }
     }
 
     return true;
@@ -121,11 +148,13 @@ export function serialize(target: any, propertyKey: string): void {
     Reflect.getMetadata(propsKey, target).push(propertyKey);
 }
 
-// TODO: enforce UUID for parameter so that classes with same names
-//  can be used and also removes depedency of constructor.name
-export function serializable(constructor: new () => Object): any {
-    const uuid = constructor.name;
-    if (serializableObjects.has(uuid))
-        throw new Error("Object with UUID " + uuid + " already exists! Cannot have duplicates!");
-    serializableObjects.set(uuid, constructor);
+export function serializable(uuid: string, customSerialization: [(obj: any, refs: Map<Object, string>, root: any) => any,
+                                                                 (obj: any, refs: Map<string, Object>, root: any) => any] = undefined): any {
+    return function(constructor: new () => Object): any {
+        if (serializableObjects.has(uuid))
+            throw new Error("Object with UUID " + uuid + " already exists! Cannot have duplicates!");
+        // define uuid in prototype
+        Reflect.defineMetadata(uuidKey, uuid, constructor.prototype);
+        serializableObjects.set(uuid, [constructor, customSerialization]);
+    }
 }
