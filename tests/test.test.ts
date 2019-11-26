@@ -245,4 +245,38 @@ describe("Test 1", () => {
 
         expect(arr[3]).toBe(arr[5]);
     });
+    test("9", () => {
+        @serializable("Test9")
+        class Test9 {
+            @serialize
+            public list: Array<any>;
+        }
+
+        @serializable("Test9b")
+        class Test9b extends Test9 {
+            @serialize
+            public list: Array<number>;
+
+            @serialize
+            public name: string;
+        }
+
+        const t1 = new Test9b();
+        t1.list = [1,2,4];
+        t1.name = "test9b";
+
+        const t2 = new Test9();
+        t2.list = [1,"2","444",23];
+
+        const str1 = Serialize(t1);
+        const str2 = Serialize(t2);
+
+        const t1_copy = Deserialize<Test9b>(str1);
+        const t2_copy = Deserialize<Test9>(str2);
+
+        expect(t1_copy.list).toEqual(t1.list);
+        expect(t1_copy.name).toEqual(t1.name);
+
+        expect(t2_copy.list).toEqual(t2.list);
+    });
 })
