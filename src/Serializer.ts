@@ -71,13 +71,9 @@ function serial(obj: Object, refs: Map<Object, string>, root: any): boolean {
     // if custom serialization then use that
     if (serializableObjects.get(uuid)[1]) {
         newObj[dataKey] = serializableObjects.get(uuid)[1][0](obj, refs, root);
-    } else {
-        // otherwise go through each key and serialize it
-        const keys = Reflect.getMetadata(propsKey, obj);
-        if (!keys) {
-            console.warn("No keys found for object with UUID " + uuid + "! Add the @serialize decorator to your instance variables.");
-            return true;
-        }
+    } else { // otherwise go through each key and serialize it
+        // get metadata-defined keys or all keys
+        const keys = Reflect.getMetadata(propsKey, obj) || Object.keys(obj);
         keys.forEach((key: string) => {
             newObj[dataKey][key] = serializeProp(obj[key], refs, root);
         });
@@ -153,7 +149,7 @@ export function serialize(target: any, propertyKey: string): void {
 }
 
 export function serializable(uuid: string, customSerialization: [(obj: any, refs: Map<Object, string>, root: any) => any,
-                                                                 (obj: any, refs: Map<string, Object>, root: any) => any] = undefined): any {
+                                                                 (obj: any, refs: Map<string, Object>, root: any) => any] = undefined): (c: new () => Object) => void {
     return function(constructor: new () => Object): any {
         if (serializableObjects.has(uuid))
             throw new Error("Object with UUID " + uuid + " already exists! Cannot have duplicates!");
