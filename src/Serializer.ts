@@ -74,6 +74,10 @@ function serial(obj: Object, refs: Map<Object, string>, root: any): boolean {
     } else {
         // otherwise go through each key and serialize it
         const keys = Reflect.getMetadata(propsKey, obj);
+        if (!keys) {
+            console.warn("No keys found for object with UUID " + uuid + "! Add the @serialize decorator to your instance variables.");
+            return true;
+        }
         keys.forEach((key: string) => {
             newObj[dataKey][key] = serializeProp(obj[key], refs, root);
         });
