@@ -224,4 +224,25 @@ describe("Test 1", () => {
         expect(t_copy.arr[4]).toEqual(t.arr[4]);
         expect(t_copy.arr[2]).toBe(t_copy.arr[4]);
     });
+    test("7", () => {
+        const str = Serialize([1,2,3,4]);
+        const arr = Deserialize<Array<number>>(str);
+
+        expect(arr).toEqual([1,2,3,4]);
+    });
+    test("8", () => {
+        const a1 = [1,2,3,4];
+        const str = Serialize([1, "asd", 4, a1, 7, a1]);
+        const arr = Deserialize<Array<any>>(str);
+
+        expect(arr).toHaveLength(6);
+        expect(arr[0]).toEqual(1);
+        expect(arr[1]).toEqual("asd");
+        expect(arr[2]).toEqual(4);
+        expect(arr[3]).toEqual(a1);
+        expect(arr[4]).toEqual(7);
+        expect(arr[5]).toEqual(a1);
+
+        expect(arr[3]).toBe(arr[5]);
+    });
 })
