@@ -8,7 +8,7 @@ const typeKey = "type";
 const dataKey = "data";
 
 type serializeProperties = [new () => Object, [(obj: any, refs: Map<Object, string>, root: any) => any,
-                                               (obj: any, refs: Map<string, Object>, root: any) => any]];
+                                               (data: any, refs: Map<string, Object>, root: any) => any]];
 
 const serializableObjects = new Map<string, serializeProperties>();
 
@@ -17,18 +17,29 @@ serializable("Array", [
     (obj: Array<any>, refs: Map<Object, string>, root: any) => {
         return obj.map((v) => serializeProp(v, refs, root));
     },
-    (obj: Array<any>, refs: Map<string, Object>, root: any) => {
-        return obj.map((v) => deserializeProp(v, refs, root));
-    }]
-)(Array);
+    (data: Array<any>, refs: Map<string, Object>, root: any) => {
+        return data.map((v) => deserializeProp(v, refs, root));
+    }
+])(Array);
 serializable("Set", [
     (obj: Set<any>, refs: Map<Object, string>, root: any) => {
         return Array.from(obj).map((v) => serializeProp(v, refs, root));
     },
-    (obj: Array<any>, refs: Map<string, Object>, root: any) => {
-        return new Set(obj.map((v) => deserializeProp(v, refs, root)));
-    }]
-)(Set);
+    (data: Array<any>, refs: Map<string, Object>, root: any) => {
+        return new Set(data.map((v) => deserializeProp(v, refs, root)));
+    }
+])(Set);
+serializable("Function", [
+    (obj: Function, _: Map<Object, string>, __: any) => {
+        const uuid = Reflect.getMetadata(uuidKey, obj.prototype);
+        if (!uuid)
+            throw new Error("Attempted to serialize function that is not serializable!");
+        return uuid;
+    },
+    (data: string, refs: Map<string, Object>, root: any) => {
+        return serializableObjects.get(data)[0];
+    }
+])(Function);
 // /*****************************************/
 
 export function Serialize(obj: Object): string {

@@ -246,18 +246,22 @@ describe("Test 1", () => {
         expect(arr[3]).toBe(arr[5]);
     });
     test("9", () => {
-        @serializable("Test9")
+        @serializable("Test9asd")
         class Test9 {
-            @serialize
+            // @serialize
             public list: Array<any>;
+
+            public doThing(): void {
+                console.log("idk");
+            }
         }
 
         @serializable("Test9b")
         class Test9b extends Test9 {
-            @serialize
+            // @serialize
             public list: Array<number>;
 
-            @serialize
+            // @serialize
             public name: string;
         }
 
@@ -278,5 +282,33 @@ describe("Test 1", () => {
         expect(t1_copy.name).toEqual(t1.name);
 
         expect(t2_copy.list).toEqual(t2.list);
+    });
+    test("10", () => {
+        @serializable("Test10")
+        class Test10 {
+            cons: new (s: string) => Test10b;
+
+            newThing(): Test10b {
+                return new this.cons("asd");
+            }
+        }
+
+        @serializable("Test10b")
+        class Test10b {
+            s: string;
+            constructor(s?: string) {
+                this.s = s;
+            }
+        }
+
+        const t = new Test10();
+        t.cons = Test10b;
+
+        const str = Serialize(t);
+        const t_copy = Deserialize<Test10>(str);
+
+        expect(t_copy.cons).not.toBeUndefined();
+        expect(t_copy.newThing()).toBeInstanceOf(Test10b);
+        expect(t_copy.newThing().s).toEqual("asd");
     });
 })
