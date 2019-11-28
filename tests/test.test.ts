@@ -311,4 +311,25 @@ describe("Test 1", () => {
         expect(t_copy.newThing()).toBeInstanceOf(Test10b);
         expect(t_copy.newThing().s).toEqual("asd");
     });
+    test("11", () => {
+        @serializable("Test11")
+        class Test11<T> {
+            thing: T;
+        }
+
+        const t1 = new Test11<string>();
+        t1.thing = "asd";
+
+        const t2 = new Test11<number>();
+        t2.thing = 5;
+
+        const str1 = Serialize(t1);
+        const str2 = Serialize(t2);
+
+        const t1_copy = Deserialize<Test11<string>>(str1);
+        const t2_copy = Deserialize<Test11<number>>(str2);
+
+        expect(t1_copy.thing).toEqual(t1.thing);
+        expect(t2_copy.thing).toEqual(t2.thing);
+    })
 })
