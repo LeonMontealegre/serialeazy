@@ -1,6 +1,6 @@
 import "jest";
 import {inspect} from "util";
-import {serialize, serializable, Serialize, Deserialize} from "../src/Serializer";
+import {serialize, serializable, Serialize, Deserialize, propsKey} from "../src/Serializer";
 
 describe("Test 1", () => {
     test("1", () => {
@@ -331,5 +331,52 @@ describe("Test 1", () => {
 
         expect(t1_copy.thing).toEqual(t1.thing);
         expect(t2_copy.thing).toEqual(t2.thing);
-    })
+    });
+    test("12", () => {
+        class Test12 {
+            @serialize
+            str: string;
+
+            parentThing(): void {}
+        }
+
+        @serializable("Test12a")
+        class Test12a extends Test12 {
+            @serialize
+            isOn: boolean;
+        }
+
+        @serializable("Test12b")
+        class Test12b extends Test12 {
+            @serialize
+            on: string;
+
+            isOn(): string {
+                return "am i on? doubt it! " + this.on;
+            }
+        }
+
+        const ta = new Test12a();
+        ta.str = "TA";
+        ta.isOn = true;
+
+        const tb = new Test12b();
+        tb.str = "TB";
+        tb.on = "ghahahah";
+
+        const t = new Test12();
+        t.str = "T";
+
+        const str1 = Serialize(ta);
+        const str2 = Serialize(tb);
+
+        const ta_copy = Deserialize<Test12a>(str1);
+        const tb_copy = Deserialize<Test12b>(str2);
+
+        expect(ta_copy.str).toEqual(ta.str);
+        expect(ta_copy.isOn).toEqual(ta.isOn);
+        expect(tb_copy.str).toEqual(tb.str);
+        expect(tb_copy.on).toEqual(tb.on);
+        expect(tb_copy.isOn()).toEqual(tb.isOn());
+    });
 })
