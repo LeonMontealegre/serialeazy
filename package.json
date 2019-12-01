@@ -1,21 +1,19 @@
 {
-  "name": "opencircuits",
-  "description": "OpenCircuits",
-  "author": "Leon Montealegre",
-  "version": "0.0.2",
+  "name": "serialeazy",
+  "description": "An easy-to-use serialization library with support for references, type information, generics, inheritance, and more!",
+  "author": "Leon Montealegre <leonm99@gmail.com> (http://leonmontealeg.re/)",
+  "version": "0.0.1",
   "license": "GPL-3.0",
   "repository": {
     "type": "git",
-    "url": "git://github.com/OpenCircuits/OpenCircuits.git"
+    "url": "git://github.com/LeonMontealegre/serialeazy.git"
   },
   "devDependencies": {
     "@types/jest": "^24.0.23",
     "@types/node": "^12.12.12",
     "@types/reflect-metadata": "^0.1.0",
     "jest": "^24.9.0",
-    "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.0",
-    "serializr": "^1.5.3",
     "ts-jest": "^24.2.0",
     "ts-loader": "^5.3.1",
     "typescript": "^3.6.4",
@@ -28,6 +26,6 @@
     "test": "jest"
   },
   "dependencies": {
-    "typedjson": "^1.5.1"
+    "reflect-metadata": "^0.1.13"
   }
 }
