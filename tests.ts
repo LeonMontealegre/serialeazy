@@ -1,6 +1,6 @@
 import "jest";
 import {inspect} from "util";
-import {serialize, serializable, Serialize, Deserialize, propsKey} from "../src/Serializer";
+import {serialize, serializable, Serialize, Deserialize} from "./Serializer";
 
 describe("Test 1", () => {
     test("1", () => {
