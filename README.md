@@ -1,14 +1,13 @@
-# Serializr
-
-_Serialize and deserialize arbitrarily compelx objects into JSON_
-
-_Serialeazy is feature complete and supports serialization of references, type information, generics, inheritance, function types, and much much more._
-
-# Introduction
+# Serialeazy
 
 Serialeazy is a utility library that can serialize complex model-graphs and deserialize them with all references and type information intact.
 
-Features:
+
+_Serialize and deserialize arbitrarily complex objects into JSON_
+
+_Serialeazy is feature complete and supports serialization of references, type information, generics, inheritance, function types, and much much more._
+
+# Features
 
 -   (De)serialize primitive values
 -   (De)serialize any object (tagged as serializable) and have it saved as a reference
