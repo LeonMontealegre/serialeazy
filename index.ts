@@ -114,6 +114,10 @@ function deserializeProp(prop: any, refs: Map<string, Object>, root: any): any {
     throw new Error("Unknown property! " + prop.constructor.name);
 }
 
+export function Create<T>(uuid: string): T {
+    return construct(uuid) as T;
+}
+
 function construct(uuid: string): Object {
     return new (serializableObjects.get(uuid)[0])();
 }

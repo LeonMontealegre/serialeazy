@@ -1,6 +1,6 @@
 import "jest";
 import {inspect} from "util";
-import {serialize, serializable, Serialize, Deserialize} from ".";
+import {serialize, serializable, Serialize, Deserialize, Create} from "./index";
 
 describe("Test 1", () => {
     test("1", () => {
@@ -378,5 +378,22 @@ describe("Test 1", () => {
         expect(tb_copy.str).toEqual(tb.str);
         expect(tb_copy.on).toEqual(tb.on);
         expect(tb_copy.isOn()).toEqual(tb.isOn());
+    });
+    test("13", () => {
+        @serializable("Test13")
+        class Test13 {
+            @serialize
+            str: string;
+
+            doThing(): string {
+                return "Hi " + this.str;
+            }
+        }
+
+        const t = Create<Test13>("Test13");
+        t.str = "asd";
+
+        expect(t).toBeInstanceOf(Test13);
+        expect(t.doThing()).toEqual("Hi asd");
     });
 })
