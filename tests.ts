@@ -396,4 +396,9 @@ describe("Test 1", () => {
         expect(t).toBeInstanceOf(Test13);
         expect(t.doThing()).toEqual("Hi asd");
     });
+    test("14", () => {
+        const num = Deserialize<number>(Serialize(5));
+
+        expect(num).toBe(5);
+    })
 })

@@ -32,7 +32,7 @@ class Serializer {
         // TODO: add check for maps/sets/other built-ins
         throw new Error("Unknown property! " + prop.constructor.name);
     }
-    public serialize(obj: Object, refs: Map<Object, string>, root: any, customBehavior: (obj: Object) => boolean): boolean {
+    public serialize(obj: any, refs: Map<Object, string>, root: any, customBehavior: (obj: Object) => boolean): boolean {
         if (!customBehavior(obj))
             return true;
 
@@ -131,7 +131,10 @@ const serializer = new Serializer();
 /*****************************************/
 /**   Public facing utility functions    */
 /*****************************************/
-export function Serialize(obj: Object, customBehavior: (obj: Object) => boolean = (_) => true): string {
+export function Serialize(obj: any, customBehavior: (obj: Object) => boolean = (_) => true): string {
+    if (!(obj instanceof Object))
+        return JSON.stringify({ "0": obj });
+
     const root = {};
     serializer.serialize(obj, new Map<Object, string>(), root, customBehavior);
     return JSON.stringify(root);
@@ -143,11 +146,14 @@ export function Create<T>(uuid: string): T {
 
 export function Deserialize<T>(str: string): T {
     const root = JSON.parse(str);
+    if ("0" in root && !(root["0"] instanceof Object))
+        return root["0"] as T;
+
     const map = new Map<string, Object>();
 
-    serializer.deserialize('0', map, root);
+    serializer.deserialize("0", map, root);
 
-    return map.get('0') as T;
+    return map.get("0") as T;
 }
 /*****************************************/
 
