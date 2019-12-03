@@ -64,7 +64,7 @@ function serializeProp(prop: any, refs: Map<Object, string>, root: any, customBe
         return { "ref": refs.get(prop) }
 
     // TODO: add check for maps/sets/other built-ins
-    throw new Error("Unknown property! " + prop);
+    throw new Error("Unknown property! " + prop.constructor.name);
 }
 
 function serial(obj: Object, refs: Map<Object, string>, root: any, customBehavior: (obj: Object) => boolean): boolean {
@@ -111,7 +111,7 @@ function deserializeProp(prop: any, refs: Map<string, Object>, root: any): any {
         return refs.get(refNum);
 
     // TODO: add check for sets/other built-ins
-    throw new Error("Unknown property! " + prop);
+    throw new Error("Unknown property! " + prop.constructor.name);
 }
 
 function construct(uuid: string): Object {
