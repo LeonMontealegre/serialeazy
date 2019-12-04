@@ -400,5 +400,16 @@ describe("Test 1", () => {
         const num = Deserialize<number>(Serialize(5));
 
         expect(num).toBe(5);
+    });
+    test("15", () => {
+        const arr: any[] = [1,2];
+        arr.push(arr);
+
+        const arr_copy = Deserialize<any[]>(Serialize(arr));
+
+        expect(arr_copy).toHaveLength(3);
+        expect(arr_copy[0]).toEqual(arr[0]);
+        expect(arr_copy[1]).toEqual(arr[1]);
+        expect(arr_copy[2]).toBe(arr_copy);
     })
 })
