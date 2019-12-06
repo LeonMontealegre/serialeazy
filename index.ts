@@ -206,7 +206,7 @@ export function serializable<T>(uuid: string, customBehavior: CustomBehavior<T> 
 /*****************************************/
 serializable("Array", {
     customSerialization: (serializer: Serializer, obj: any[], refs: Map<Object, string>, root: any, customFilter: (obj: Object) => boolean) => {
-        return obj.map((v) => serializer.serializeProperty(v, refs, root, customFilter));
+        return obj.filter(customFilter).map((v) => serializer.serializeProperty(v, refs, root, customFilter));
     },
     customDeserialization: (serializer: Serializer, obj: any[], data: any[], refs: Map<string, Object>, root: any) => {
         data.forEach((v) => obj.push(serializer.deserializeProperty(v, refs, root)));
@@ -214,7 +214,7 @@ serializable("Array", {
 })(Array);
 serializable("Set", {
     customSerialization: (serializer: Serializer, obj: Set<any>, refs: Map<Object, string>, root: any, customFilter: (obj: Object) => boolean) => {
-        return Array.from(obj).map((v) => serializer.serializeProperty(v, refs, root, customFilter));
+        return Array.from(obj).filter(customFilter).map((v) => serializer.serializeProperty(v, refs, root, customFilter));
     },
     customDeserialization: (serializer: Serializer, obj: Set<any>, data: any[], refs: Map<string, Object>, root: any) => {
         data.forEach((v) => obj.add(serializer.deserializeProperty(v, refs, root)));
