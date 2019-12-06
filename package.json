@@ -1,6 +1,6 @@
 {
   "name": "serialeazy",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "An easy-to-use serialization library with support for references, type information, generics, inheritance, and more!",
   "keywords": ["serialization", "deserialization", "serialize", "deserialize", "decorators", "references", "types", "json", "circular"],
   "homepage": "https://github.com/LeonMontealegre/serialeazy#readme",
