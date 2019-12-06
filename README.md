@@ -155,7 +155,7 @@ const p3 = new Perons("Daniel", "21", "6' 0");
 
 const people = [p1, p2, p3, p1, p2, p3];
 
-const people_copy = Deserialize<People[]>(Serialize(people));
+const people_copy = Deserialize<Person[]>(Serialize(people));
 
 console.log(people_copy.length); // 6
 console.log(people_copy[0] === people_copy[3]); // true
