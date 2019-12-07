@@ -29,7 +29,7 @@ class Serializer {
         this.serializableObjects = new Map<string, SerializeProperties<any>>();
     }
 
-    private findCustomBehavior(obj: Object, custom: CustomSerialization<any>[] = []): CustomBehavior<any> {
+    public findCustomBehavior(obj: Object, custom: CustomSerialization<any>[] = []): CustomBehavior<any> {
         const props = custom.find((prop) => obj instanceof prop.constructor);
         return (props) ? (props.customBehavior) : (undefined);
     }
@@ -47,6 +47,16 @@ class Serializer {
         // apply custom filter if it is given
         keys = (customFilter) ? (keys.filter((key) => customFilter(obj, key))) : (keys);
         return keys;
+    }
+
+    public defaultSerialization(obj: Object, refs: Map<Object, string>, root: any, custom: CustomSerialization<any>[] = []): any {
+        const behavior = this.findCustomBehavior(obj, custom);
+        // go through each key and serialize it
+        const data = {};
+        this.getKeys(obj, behavior).forEach((key: string) => {
+            data[key] = this.serializeProperty(obj[key], refs, root, custom);
+        });
+        return data;
     }
 
     public serializeProperty(prop: any, refs: Map<Object, string>, root: any, custom: CustomSerialization<any>[] = []): any {
@@ -77,17 +87,14 @@ class Serializer {
         };
 
         const sObj = this.serializableObjects.get(uuid);
-
-        const behavior2 = this.findCustomBehavior(obj, custom);
+        const behavior = this.findCustomBehavior(obj, custom);
 
         // if custom serialization then use that
-        const customSerialization = ((behavior2 ? (behavior2.customSerialization) : (undefined)) || sObj.customBehavior.customSerialization);
+        const customSerialization = ((behavior ? (behavior.customSerialization) : (undefined)) || sObj.customBehavior.customSerialization);
         if (customSerialization) {
             newObj[dataKey] = customSerialization(this, obj, refs, root, custom);
-        } else { // otherwise go through each key and serialize it
-            this.getKeys(obj, behavior2).forEach((key: string) => {
-                newObj[dataKey][key] = this.serializeProperty(obj[key], refs, root, custom);
-            });
+        } else {
+            newObj[dataKey] = this.defaultSerialization(obj, refs, root, custom);
         }
 
         root[refs.get(obj)] = newObj;
