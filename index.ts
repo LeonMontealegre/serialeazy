@@ -38,6 +38,17 @@ class Serializer {
         this.serializableObjects.set(uuid, props);
     }
 
+    public getKeys(obj: Object, behavior: CustomBehavior<any>): string[] {
+        // get metadata-defined keys or all keys
+        const customFilter = (behavior) ? (behavior.customKeyFilter) : (undefined);
+        let keys = Reflect.getMetadataKeys(obj).filter(key => key != uuidKey);
+        if (keys.length == 0)
+            keys = Object.keys(obj);
+        // apply custom filter if it is given
+        keys = (customFilter) ? (keys.filter((key) => customFilter(obj, key))) : (keys);
+        return keys;
+    }
+
     public serializeProperty(prop: any, refs: Map<Object, string>, root: any, custom: CustomSerialization<any>[] = []): any {
         // primitives should be trivially saved
         if (!(prop instanceof Object))
@@ -74,14 +85,7 @@ class Serializer {
         if (customSerialization) {
             newObj[dataKey] = customSerialization(this, obj, refs, root, custom);
         } else { // otherwise go through each key and serialize it
-            // get metadata-defined keys or all keys
-            const customFilter = (behavior2) ? (behavior2.customKeyFilter) : (undefined);
-            let keys = Reflect.getMetadataKeys(obj).filter(key => key != uuidKey);
-            if (keys.length == 0)
-                keys = Object.keys(obj);
-            // apply custom filter if it is given
-            keys = (customFilter) ? (keys.filter((key) => customFilter(obj, key))) : (keys);
-            keys.forEach((key: string) => {
+            this.getKeys(obj, behavior2).forEach((key: string) => {
                 newObj[dataKey][key] = this.serializeProperty(obj[key], refs, root, custom);
             });
         }
