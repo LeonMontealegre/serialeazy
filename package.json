@@ -1,13 +1,25 @@
 {
   "name": "serialeazy",
-  "version": "1.2.2",
+  "version": "1.2.4",
   "description": "An easy-to-use serialization library with support for references, type information, generics, inheritance, and more!",
-  "keywords": ["serialization", "deserialization", "serialize", "deserialize", "decorators", "references", "types", "json", "circular"],
+  "keywords": [
+    "serialization",
+    "deserialization",
+    "serialize",
+    "deserialize",
+    "decorators",
+    "references",
+    "types",
+    "json",
+    "circular"
+  ],
   "homepage": "https://github.com/LeonMontealegre/serialeazy#readme",
   "bugs": "https://github.com/LeonMontealegre/serialeazy/issues",
   "license": "GPL-3.0",
   "author": "Leon Montealegre <leonm99@gmail.com> (http://leonmontealeg.re/)",
-  "files": ["dist/*"],
+  "files": [
+    "dist/*"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "repository": {
@@ -25,9 +37,9 @@
     "@types/jest": "^24.0.23",
     "@types/node": "^12.12.12",
     "@types/reflect-metadata": "^0.1.0",
-    "jest": "^24.9.0",
+    "jest": "^26.0.1",
     "rimraf": "^3.0.0",
-    "ts-jest": "^24.2.0",
+    "ts-jest": "^26.1.0",
     "typescript": "^3.6.4"
   }
 }
