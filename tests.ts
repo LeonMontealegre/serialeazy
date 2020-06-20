@@ -411,5 +411,12 @@ describe("Test 1", () => {
         expect(arr_copy[0]).toEqual(arr[0]);
         expect(arr_copy[1]).toEqual(arr[1]);
         expect(arr_copy[2]).toBe(arr_copy);
-    })
+    });
+    test("16", () => {
+        const date = new Date();
+
+        const date2 = Deserialize<Date>(Serialize(date));
+
+        expect(date.getTime()).toEqual(date2.getTime());
+    });
 })

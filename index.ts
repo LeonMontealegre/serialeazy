@@ -259,4 +259,12 @@ serializable("Function", {
         // do nothing
     }
 })(Function);
+serializable("Date", {
+    customSerialization: (_: Serializer, date: Date) => {
+        return Number(date);
+    },
+    customConstruction: (_: Serializer, data: string) => {
+        return new Date(parseInt(data));
+    }
+})(Date);
 /*****************************************/
