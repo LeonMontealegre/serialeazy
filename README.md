@@ -170,8 +170,6 @@ console.log(people_copy[2] === people_copy[5]); // true
 
 * * *
 
-![npm](https://img.shields.io/npm/dt/serialeazy)
-
 [deps]: https://david-dm.org/LeonMontealegre/serialeazy/status.svg
 [deps-url]: https://david-dm.org/LeonMontealegre/serialeazy
 
