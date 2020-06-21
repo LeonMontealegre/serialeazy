@@ -1,5 +1,10 @@
 # Serialeazy
 
+[![npm][npm]][npm-url]
+[![deps][deps]][deps-url]
+[![Install Size][size]][size-url]
+[![Downloads][downloads]][downloads-url]
+
 Serialeazy is a utility library that can serialize complex model-graphs and deserialize them with all references and type information intact.
 
 
@@ -164,3 +169,18 @@ console.log(people_copy[2] === people_copy[5]); // true
 ```
 
 * * *
+
+![npm](https://img.shields.io/npm/dt/serialeazy)
+
+[deps]: https://david-dm.org/LeonMontealegre/serialeazy/status.svg
+[deps-url]: https://david-dm.org/LeonMontealegre/serialeazy
+
+[downloads]: https://img.shields.io/npm/dt/serialeazy
+[downloads-url]: https://www.npmjs.com/package/serialeazy
+
+[npm]: https://img.shields.io/npm/v/serialeazy
+[npm-url]: https://www.npmjs.com/package/serialeazy
+
+[size]: https://packagephobia.com/badge?p=serialeazy
+[size-url]: https://packagephobia.com/result?p=serialeazy
+
