@@ -419,4 +419,113 @@ describe("Test 1", () => {
 
         expect(date.getTime()).toEqual(date2.getTime());
     });
+    test("17", () => {
+        class DontSerializeMe {
+            info: string;
+        }
+
+        @serializable("Test17")
+        class SerializeMeButNotOther {
+            other: DontSerializeMe;
+
+            data: string;
+        }
+
+        const d = new DontSerializeMe();
+        d.info = "my info 1";
+
+        const s = new SerializeMeButNotOther();
+        s.other = d;
+        s.data = "my info 2";
+
+        // Specify custom serialization in Serialization function call
+        const s2 = Deserialize<SerializeMeButNotOther>(Serialize(s, [
+            {
+                type: SerializeMeButNotOther,
+                customBehavior: {
+                    customKeyFilter: (_: SerializeMeButNotOther, key: string) => {
+                        return (key != "other"); // Dont serialize 'other' key
+                    }
+                }
+            }
+        ]));
+
+        expect(s2.other).toBeUndefined();
+        expect(s2.data).toEqual(s.data);
+    });
+    test("18", () => {
+        type AnimalType = "Land" | "Aquatic";
+
+        @serializable("Test18")
+        class Animal {
+            private tag: string;
+            private aType: AnimalType;
+
+            public constructor(tag: string = "", type: AnimalType = "Land") {
+                this.tag = tag;
+                this.aType = type;
+            }
+
+            public getTag(): string {
+                return this.tag;
+            }
+            public getType(): AnimalType {
+                return this.aType;
+            }
+        }
+
+        @serializable("Test18b")
+        class Zoo {
+            private animals: Animal[];
+
+            public constructor(animals: Animal[] = []) {
+                this.animals = animals;
+            }
+
+            public getAnimals(): Animal[] {
+                return this.animals;
+            }
+        }
+
+        const zoo = new Zoo([
+            new Animal("Pig"),
+            new Animal("Cow"),
+            new Animal("Whale", "Aquatic"),
+            new Animal("Leopard"),
+            new Animal("Fish", "Aquatic")
+        ]);
+
+
+        // Serialize zoo but only include Land animals
+        //  in the list of animals within the zoo
+        const s = Serialize(zoo, [
+            {
+                type: Zoo,
+                customBehavior: {
+                    customSerialization: (serializer, zoo: Zoo, refs, root, custom) => {
+                        // Perform default serialization
+                        const data = serializer.defaultSerialization(zoo, refs, root, custom);
+
+                        // Now, let's remove all the non-land animals from the 'default'
+                        //  Serialization of 'zoo.animals'
+                        const animals = zoo.getAnimals().filter((a) => a.getType() == "Land");
+
+                        // Overwrite the data's 'animals' attribute with the new filtered set
+                        data["animals"] = serializer.serializeProperty(animals, refs, root, custom);
+
+                        return data;
+                    },
+                    customKeyFilter: (_: Zoo, key: string) => {
+                        return (key != "animals"); // Don't serialize the animals, let ^ do it
+                    }
+                }
+            }
+        ]);
+        const landZoo = Deserialize<Zoo>(s);
+
+        expect(landZoo.getAnimals()).toHaveLength(3);
+        expect(landZoo.getAnimals()[0].getTag()).toEqual("Pig");
+        expect(landZoo.getAnimals()[1].getTag()).toEqual("Cow");
+        expect(landZoo.getAnimals()[2].getTag()).toEqual("Leopard");
+    });
 })
