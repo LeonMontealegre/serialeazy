@@ -30,7 +30,7 @@ class Serializer {
     }
 
     public findCustomBehavior(obj: Object, custom: CustomSerialization<any>[] = []): CustomBehavior<any> {
-        const props = custom.find((prop) => obj instanceof prop.constructor);
+        const props = custom.find((prop) => obj instanceof prop.type);
         return (props) ? (props.customBehavior) : (undefined);
     }
 
