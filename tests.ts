@@ -2,8 +2,8 @@ import "jest";
 import {inspect} from "util";
 import {serialize, serializable, Serialize, Deserialize, Create} from "./index";
 
-describe("Test 1", () => {
-    test("1", () => {
+describe("Test Suite", () => {
+    test(" 1 – Basic class serialization", () => {
         @serializable("C")
         class C {
             @serialize tag: string;
@@ -48,7 +48,7 @@ describe("Test 1", () => {
         expect(a1_copy.connection).toBe(a2_copy.connection);
         expect(c_copy.doThing()).toEqual(c.doThing());
     });
-    test("2", () => {
+    test(" 2 – Array of mixed references and custom classes", () => {
         @serializable("Test")
         class Test {
             @serialize things: any[];
@@ -82,7 +82,7 @@ describe("Test 1", () => {
         expect(t_copy.things[6].tag).toEqual(t.things[6].tag);
         expect(t_copy.things[7]).toEqual(t_copy.things[2]);
     })
-    test("3", () => {
+    test(" 3 – Basic cyclical dependencies", () => {
         @serializable("Test2")
         class Test2 {
             @serialize child: Test3;
@@ -102,7 +102,7 @@ describe("Test 1", () => {
 
         expect(t2_copy.child.parent).toBe(t2_copy);
     });
-    test("4", () => {
+    test(" 4 – Complex cyclical graph", () => {
         @serializable("Root")
         class Root {
             @serialize name: string;
@@ -165,10 +165,8 @@ describe("Test 1", () => {
         const root_copy = Deserialize<Root>(str);
 
         expect(inspect(root, {colors: true, depth: 15})).toEqual(inspect(root_copy, {colors: true, depth: 15}));
-
-        expect(1).toEqual(1);
     });
-    test("5", () => {
+    test(" 5 – Sets", () => {
         @serializable("Test5")
         class Test5 {
             @serialize things: Set<any>;
@@ -202,7 +200,7 @@ describe("Test 1", () => {
         expect(s2[3]).toBeInstanceOf(Array);
         expect(s2[3]).toHaveLength(s1[3].length);
     });
-    test("6", () => {
+    test(" 6 – Array of mixed types with other arrays and references", () => {
         @serializable("Test6")
         class Test6 {
             @serialize arr: Array<any>;
@@ -224,13 +222,13 @@ describe("Test 1", () => {
         expect(t_copy.arr[4]).toEqual(t.arr[4]);
         expect(t_copy.arr[2]).toBe(t_copy.arr[4]);
     });
-    test("7", () => {
+    test(" 7 – Array of numbers", () => {
         const str = Serialize([1,2,3,4]);
         const arr = Deserialize<Array<number>>(str);
 
         expect(arr).toEqual([1,2,3,4]);
     });
-    test("8", () => {
+    test(" 8 – Array of mixed types and cyclical references", () => {
         const a1 = [1,2,3,4];
         const str = Serialize([1, "asd", 4, a1, 7, a1]);
         const arr = Deserialize<Array<any>>(str);
@@ -245,7 +243,7 @@ describe("Test 1", () => {
 
         expect(arr[3]).toBe(arr[5]);
     });
-    test("9", () => {
+    test(" 9 – Classes with arrays of differing types", () => {
         @serializable("Test9asd")
         class Test9 {
             // @serialize
@@ -283,7 +281,7 @@ describe("Test 1", () => {
 
         expect(t2_copy.list).toEqual(t2.list);
     });
-    test("10", () => {
+    test("10 – Reference to Serializable Constructor", () => {
         @serializable("Test10")
         class Test10 {
             cons: new (s: string) => Test10b;
@@ -311,7 +309,7 @@ describe("Test 1", () => {
         expect(t_copy.newThing()).toBeInstanceOf(Test10b);
         expect(t_copy.newThing().s).toEqual("asd");
     });
-    test("11", () => {
+    test("11 – Generic class", () => {
         @serializable("Test11")
         class Test11<T> {
             thing: T;
@@ -332,7 +330,7 @@ describe("Test 1", () => {
         expect(t1_copy.thing).toEqual(t1.thing);
         expect(t2_copy.thing).toEqual(t2.thing);
     });
-    test("12", () => {
+    test("12 – 2 Custom classes", () => {
         class Test12 {
             @serialize
             str: string;
@@ -379,7 +377,7 @@ describe("Test 1", () => {
         expect(tb_copy.on).toEqual(tb.on);
         expect(tb_copy.isOn()).toEqual(tb.isOn());
     });
-    test("13", () => {
+    test("13 – Custom class Create from Tag", () => {
         @serializable("Test13")
         class Test13 {
             @serialize
@@ -396,12 +394,12 @@ describe("Test 1", () => {
         expect(t).toBeInstanceOf(Test13);
         expect(t.doThing()).toEqual("Hi asd");
     });
-    test("14", () => {
+    test("14 – Number", () => {
         const num = Deserialize<number>(Serialize(5));
 
         expect(num).toBe(5);
     });
-    test("15", () => {
+    test("15 – Array w/ itself in it", () => {
         const arr: any[] = [1,2];
         arr.push(arr);
 
@@ -412,14 +410,14 @@ describe("Test 1", () => {
         expect(arr_copy[1]).toEqual(arr[1]);
         expect(arr_copy[2]).toBe(arr_copy);
     });
-    test("16", () => {
+    test("16 – Date", () => {
         const date = new Date();
 
         const date2 = Deserialize<Date>(Serialize(date));
 
         expect(date.getTime()).toEqual(date2.getTime());
     });
-    test("17", () => {
+    test("17 – Custom Serialization Key Filter", () => {
         class DontSerializeMe {
             info: string;
         }
@@ -453,24 +451,24 @@ describe("Test 1", () => {
         expect(s2.other).toBeUndefined();
         expect(s2.data).toEqual(s.data);
     });
-    test("18", () => {
+    test("18 – Custom Serialization Advanced", () => {
         type AnimalType = "Land" | "Aquatic";
 
         @serializable("Test18")
         class Animal {
             private tag: string;
-            private aType: AnimalType;
+            private type: AnimalType;
 
             public constructor(tag: string = "", type: AnimalType = "Land") {
                 this.tag = tag;
-                this.aType = type;
+                this.type = type;
             }
 
             public getTag(): string {
                 return this.tag;
             }
             public getType(): AnimalType {
-                return this.aType;
+                return this.type;
             }
         }
 
