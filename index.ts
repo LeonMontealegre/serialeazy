@@ -186,10 +186,10 @@ export function Create<T>(uuid: string): T {
     return serializer.create(uuid) as T;
 }
 
-export function GetConstructorFor(uuid: string): T {
+export function GetConstructorFor<T>(uuid: string): new () => T {
     if (!serializer.has(uuid))
         return undefined;
-    return serializer.get(uuid).constructor as T;
+    return serializer.get(uuid).constructor;
 }
 
 export function Deserialize<T>(str: string): T {
