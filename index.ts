@@ -181,7 +181,15 @@ export function Serialize(obj: any, custom: CustomSerialization<any>[] = []): st
 }
 
 export function Create<T>(uuid: string): T {
+    if (!serializer.has(uuid))
+        return undefined;
     return serializer.create(uuid) as T;
+}
+
+export function GetConstructorFor(uuid: string): T {
+    if (!serializer.has(uuid))
+        return undefined;
+    return serializer.get(uuid).constructor as T;
 }
 
 export function Deserialize<T>(str: string): T {
