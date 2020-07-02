@@ -41,9 +41,24 @@ class Serializer {
     public getKeys(obj: Object, behavior: CustomBehavior<any>): string[] {
         // get metadata-defined keys or all keys
         const customFilter = (behavior) ? (behavior.customKeyFilter) : (undefined);
-        let keys = Reflect.getMetadataKeys(obj).filter(key => key != uuidKey);
-        if (keys.length == 0)
+
+        let keys: string[] = [];
+
+        const metaKeys = Reflect.getMetadataKeys(obj).filter(key => key != uuidKey);
+
+        // If no specification of any properties, then serialize them all
+        if (metaKeys.length == 0) {
             keys = Object.keys(obj);
+        } else {
+            // If keys only specify properties to NOT serialize, then serialize everything else
+            if (metaKeys.every(key => Reflect.getMetadata(key, obj) == false)) {
+                keys = Object.keys(obj).filter(key => !metaKeys.includes(key));
+            } else {
+                // Otherwise, serialize only the keys that are specified
+                keys = Object.keys(obj).filter(key => Reflect.getMetadata(key, obj) == true);
+            }
+        }
+
         // apply custom filter if it is given
         keys = (customFilter) ? (keys.filter((key) => customFilter(obj, key))) : (keys);
         return keys;
@@ -214,7 +229,21 @@ export function Deserialize<T>(str: string): T {
 /*****************************************/
 /**              Decorators              */
 /*****************************************/
-export function serialize(target: any, propertyKey: string): void {
+// export function serialize(target: any, propertyKey: string): void {
+//     Reflect.defineMetadata(propertyKey, true, target);
+// }
+
+export function serialize(target: any, propertyKey: string): void;
+export function serialize(keep?: boolean): (target: any, propertyKey: string) => void;
+export function serialize(keepOrTarget?: boolean | any, propertyKey?: string) {
+    if (!keepOrTarget || !(keepOrTarget instanceof Object)) {
+        const keep = keepOrTarget == undefined ? true : keepOrTarget;
+        return function(target: any, propertyKey: string) {
+            Reflect.defineMetadata(propertyKey, keep, target);
+        }
+    }
+
+    const target = keepOrTarget;
     Reflect.defineMetadata(propertyKey, true, target);
 }
 

@@ -526,4 +526,85 @@ describe("Test Suite", () => {
         expect(landZoo.getAnimals()[1].getTag()).toEqual("Cow");
         expect(landZoo.getAnimals()[2].getTag()).toEqual("Leopard");
     });
+    test("19 – Serialize certain properties", () => {
+        @serializable("Test19")
+        class Test19 {
+            @serialize
+            public prop1: string;
+
+            public prop2: string;
+
+            @serialize(true) // should be same as just @serialize
+            public prop3: string;
+
+            public constructor(prop1?: string, prop2: string = "default 2", prop3?: string) {
+                this.prop1 = prop1;
+                this.prop2 = prop2;
+                this.prop3 = prop3;
+            }
+        }
+
+        const test19 = new Test19("1", "2", "3");
+
+        const test192 = Deserialize<Test19>(Serialize(test19));
+
+        expect(test192.prop1).toEqual(test19.prop1);
+        expect(test192.prop2).not.toEqual(test19.prop2);
+        expect(test192.prop2).toEqual("default 2");
+        expect(test192.prop3).toEqual(test19.prop3);
+    });
+    test("20 – Don't Serialize certain properties", () => {
+        @serializable("Test20")
+        class Test20 {
+            public prop1: string;
+            @serialize(false)
+            public prop2: string;
+            public prop3: string;
+
+            public constructor(prop1?: string, prop2: string = "default 2", prop3?: string) {
+                this.prop1 = prop1;
+                this.prop2 = prop2;
+                this.prop3 = prop3;
+            }
+        }
+
+        const test20 = new Test20("1", "2", "3");
+
+        const test202 = Deserialize<Test20>(Serialize(test20));
+
+        expect(test202.prop1).toEqual(test20.prop1);
+        expect(test202.prop2).not.toEqual(test20.prop2);
+        expect(test202.prop2).toEqual("default 2");
+        expect(test202.prop3).toEqual(test20.prop3);
+    });
+    test("21 – Mix between serializing and not certain properties", () => {
+        @serializable("Test21")
+        class Test21 {
+            @serialize(true)
+            public prop1: string;
+            @serialize(false)
+            public prop2: string;
+            @serialize
+            public prop3: string;
+            public prop4: string;
+
+            public constructor(prop1?: string, prop2: string = "default 2", prop3?: string, prop4: string = "default 4") {
+                this.prop1 = prop1;
+                this.prop2 = prop2;
+                this.prop3 = prop3;
+                this.prop4 = prop4;
+            }
+        }
+
+        const test21 = new Test21("1", "2", "3", "4");
+
+        const test212 = Deserialize<Test21>(Serialize(test21));
+
+        expect(test212.prop1).toEqual(test21.prop1);
+        expect(test212.prop2).not.toEqual(test21.prop2);
+        expect(test212.prop2).toEqual("default 2");
+        expect(test212.prop3).toEqual(test21.prop3);
+        expect(test212.prop4).not.toEqual(test21.prop4);
+        expect(test212.prop4).toEqual("default 4");
+    });
 })
