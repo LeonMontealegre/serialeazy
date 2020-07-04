@@ -120,6 +120,13 @@ class Serializer {
         return new (this.get(uuid).constructor)();
     }
 
+    public defaultDeserialize(obj: any, data: any, refs: Map<string, Object>, root: any): void {
+        // Go through each key (except typeKey)
+        Object.keys(data).filter(key => key != typeKey).forEach((key => {
+            obj[key] = this.deserializeProperty(data[key], refs, root);
+        }));
+    }
+
     public deserializeProperty(prop: any, refs: Map<string, Object>, root: any): any {
         if (!(prop instanceof Object))
             return prop;
@@ -155,10 +162,7 @@ class Serializer {
         if (customBehavior.customDeserialization) {
             customBehavior.customDeserialization(this, obj, data, refs, root);
         } else {
-            // Go through each key (except typeKey)
-            Object.keys(data).filter(key => key != typeKey).forEach((key => {
-                obj[key] = this.deserializeProperty(data[key], refs, root);
-            }));
+            this.defaultDeserialize(obj, data, refs, root);
         }
 
         if (customBehavior.customPostDeserialization)
@@ -218,6 +222,14 @@ export function Deserialize<T>(str: string): T {
 
     return map.get("0") as T;
 }
+
+export function addCustomBehavior<T>(uuid: string, newBehavior: CustomBehavior<T> = {}): void {
+    if (!serializer.has(uuid))
+        throw new Error(`Serialize the object (${uuid}) before adding behavior!`);
+
+    const curBehavior = serializer.get(uuid).customBehavior;
+    serializer.get(uuid).customBehavior = {...curBehavior, ...newBehavior};
+}
 /*****************************************/
 
 
@@ -229,10 +241,6 @@ export function Deserialize<T>(str: string): T {
 /*****************************************/
 /**              Decorators              */
 /*****************************************/
-// export function serialize(target: any, propertyKey: string): void {
-//     Reflect.defineMetadata(propertyKey, true, target);
-// }
-
 export function serialize(target: any, propertyKey: string): void;
 export function serialize(keep?: boolean): (target: any, propertyKey: string) => void;
 export function serialize(keepOrTarget?: boolean | any, propertyKey?: string) {
@@ -255,14 +263,6 @@ export function serializable<T>(uuid: string, customBehavior: CustomBehavior<T> 
         Reflect.defineMetadata(uuidKey, uuid, constructor.prototype);
         serializer.add(uuid, {constructor, customBehavior});
     }
-}
-
-export function addCustomBehavior<T>(uuid: string, newBehavior: CustomBehavior<T> = {}): any {
-    if (!serializer.has(uuid))
-        throw new Error(`Serialize the object (${uuid}) before adding behavior!`);
-
-    const curBehavior = serializer.get(uuid).customBehavior;
-    serializer.get(uuid).customBehavior = {...curBehavior, ...newBehavior};
 }
 /*****************************************/
 
