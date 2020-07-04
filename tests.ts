@@ -645,4 +645,25 @@ describe("Test Suite", () => {
         expect(tt1_copy2.a).toEqual("aa22");
         expect(tt1_copy2.b).toEqual("bb");
     });
+    test("23 – Class with edge-case variable names", () => {
+        @serializable("Test23")
+        class Test23 {
+            uuid: number;
+            type: string;
+            data: string;
+
+            public constructor(uuid: number = 0, type: string = "", data: string = "") {
+                this.uuid = uuid;
+                this.type = type;
+                this.data = data;
+            }
+        }
+
+        const t = new Test23(123, "testtt", "dataaa");
+        const t2 = Deserialize<Test23>(Serialize(t));
+
+        expect(t2.uuid).toEqual(t.uuid);
+        expect(t2.type).toEqual(t.type);
+        expect(t2.data).toEqual(t.data);
+    });
 });

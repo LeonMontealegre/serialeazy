@@ -121,8 +121,8 @@ class Serializer {
     }
 
     public defaultDeserialize(obj: any, data: any, refs: Map<string, Object>, root: any): void {
-        // Go through each key (except typeKey)
-        Object.keys(data).filter(key => key != typeKey).forEach((key => {
+        // Go through each key
+        Object.keys(data).forEach((key => {
             obj[key] = this.deserializeProperty(data[key], refs, root);
         }));
     }
