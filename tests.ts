@@ -1,6 +1,6 @@
 import "jest";
 import {inspect} from "util";
-import {serialize, serializable, Serialize, Deserialize, Create} from "./index";
+import {serialize, serializable, Serialize, Deserialize, Create, addCustomBehavior} from "./index";
 
 describe("Test Suite", () => {
     test(" 1 – Basic class serialization", () => {
@@ -607,4 +607,42 @@ describe("Test Suite", () => {
         expect(test212.prop4).not.toEqual(test21.prop4);
         expect(test212.prop4).toEqual("default 4");
     });
-})
+    test("22 – Add Custom Behavior", () => {
+        @serializable("Test22", {
+            customDeserialization: (_, obj: Test22) => {
+                obj.a = "asd";
+                obj.b = "fgh";
+            }
+        })
+        class Test22 {
+            public a: string;
+            public b: string;
+            public constructor(a: string = "", b: string = "") {
+                this.a = a;
+                this.b = b;
+            }
+        }
+
+        const tt1 = new Test22("aa", "bb");
+        const tt1_copy = Deserialize<Test22>(Serialize(tt1));
+        expect(tt1_copy.a).toEqual("asd");
+        expect(tt1_copy.b).toEqual("fgh");
+
+        addCustomBehavior("Test22", {
+            customDeserialization: (_, obj: Test22, data) => {
+                obj.a = data.a;
+                obj.b = data.b;
+            },
+            customSerialization: (_, obj: Test22) => {
+                return {
+                    a: obj.a + "22",
+                    b: obj.b
+                }
+            }
+        });
+
+        const tt1_copy2 = Deserialize<Test22>(Serialize(tt1));
+        expect(tt1_copy2.a).toEqual("aa22");
+        expect(tt1_copy2.b).toEqual("bb");
+    });
+});

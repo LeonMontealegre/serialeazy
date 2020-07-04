@@ -130,7 +130,7 @@ class Serializer {
             return refs.get(refNum);
 
         // TODO: add check for sets/other built-ins
-        throw new Error("Unknown property! " + prop.constructor.name);
+        throw new Error(`Unknown property ${root[refNum][typeKey]}!`);
     }
     public deserialize(num: string, refs: Map<string, Object>, root: any): boolean {
         // check if we already deserialized the given obj
@@ -255,6 +255,14 @@ export function serializable<T>(uuid: string, customBehavior: CustomBehavior<T> 
         Reflect.defineMetadata(uuidKey, uuid, constructor.prototype);
         serializer.add(uuid, {constructor, customBehavior});
     }
+}
+
+export function addCustomBehavior<T>(uuid: string, newBehavior: CustomBehavior<T> = {}): any {
+    if (!serializer.has(uuid))
+        throw new Error(`Serialize the object (${uuid}) before adding behavior!`);
+
+    const curBehavior = serializer.get(uuid).customBehavior;
+    serializer.get(uuid).customBehavior = {...curBehavior, ...newBehavior};
 }
 /*****************************************/
 
