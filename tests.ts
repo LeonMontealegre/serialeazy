@@ -786,4 +786,22 @@ describe("Test Suite", () => {
         const arr_copy = Deserialize<any[]>(str);
         expect(arr).toEqual(arr_copy);
     });
+    test("27 – Undefined", () => {
+        @serializable("Test27")
+        class Test27 {
+            thing: any;
+            num: number;
+
+            public constructor(thing?: any, num: number = 0) {
+                this.thing = thing;
+                this.num = num;
+            }
+        }
+
+        const t = new Test27(undefined, 37);
+
+        const t_copy = Deserialize<Test27>(Serialize(t));
+
+        expect(t).toEqual(t_copy);
+    });
 });
