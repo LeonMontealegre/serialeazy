@@ -1,4 +1,4 @@
-import {RootType, Wrapper, DataType} from "./Types";
+import {RootType, Wrapper, DataType, isRef, Ref} from "./Types";
 
 import {CustomBehavior, CustomSerialization,
         SerializableObjects, uuidKey} from "./internal";
@@ -106,34 +106,44 @@ function compress(entry: DataType, root: RootType, counts: Map<string, number>):
 
     const data = entry["data"];
 
-    Object.keys(data).forEach((key2) => {
-        const val = data[key2];
-        if (val["ref"]) {
-            const ref = val["ref"];
-            if (counts.get(ref) == 1) {
-                compress(root[ref], root, counts);
-                data[key2] = root[ref];
-                delete root[ref];
-            }
-        }
-    });
+    // Get all entries that are references with exactly 1 reference (in counts)
+    const refs = Object.entries(data)
+                       .filter(([_, val]) => isRef(val))
+                       .map(([key, ref]) => [key, ref["ref"]])
+                       .filter(([_, ref]) => counts.get(ref) == 1) as [string, string][];
+
+    // Loop through each of the above entries and compress them, delete them from the
+    //  root graph, and add them to their new parent data
+    for (const [key, ref] of refs) {
+        compress(root[ref], root, counts);
+        data[key] = root[ref];
+        delete root[ref];
+    }
 }
 
 export function Compress(root: RootType): void {
     const counts = new Map<string, number>();
-    Object.keys(root).forEach((key) => {
+
+    // Get total counts that reference each object
+    for (const key of Object.keys(root)) {
         if (!counts.has(key))
             counts.set(key, 1);
 
+        // Look for references in the data of each object
         const data = root[key]["data"];
-        Object.values(data).forEach((val) => {
-            if (val["ref"]) {
-                const ref = val["ref"];
-                if (!counts.has(ref))
-                    counts.set(ref, 0);
-                counts.set(ref, counts.get(ref) + 1);
-            }
-        });
-    });
+
+        // Get all values that are references and map them to the actual reference #
+        const refs = Object.values(data)
+                           .filter((val) => isRef(val))
+                           .map((ref) => ref["ref"]) as string[];
+
+        // Loop through each ref and add it to the counts
+        for (const ref of refs) {
+            if (!counts.has(ref))
+                counts.set(ref, 0);
+            counts.set(ref, counts.get(ref) + 1);
+        }
+    }
+
     compress(root["0"], root, counts);
 }
