@@ -1,6 +1,6 @@
 import "jest";
 import {inspect} from "util";
-import {serialize, serializable, Serialize, Deserialize, Create, addCustomBehavior} from "./index";
+import {serialize, serializable, Serialize, Deserialize, Create, addCustomBehavior} from "./src/index";
 
 
 // Useful common classes
@@ -536,16 +536,16 @@ describe("Test Suite", () => {
             {
                 type: Zoo,
                 customBehavior: {
-                    customSerialization: (serializer, zoo: Zoo, refs, root, custom) => {
+                    customSerialization: (serializer, zoo: Zoo) => {
                         // Perform default serialization
-                        const data = serializer.defaultSerialization(zoo, refs, root, custom);
+                        const data = serializer.defaultSerialization(zoo);
 
                         // Now, let's remove all the non-land animals from the 'default'
                         //  Serialization of 'zoo.animals'
                         const animals = zoo.getAnimals().filter((a) => a.getType() == "Land");
 
                         // Overwrite the data's 'animals' attribute with the new filtered set
-                        data["animals"] = serializer.serializeProperty(animals, refs, root, custom);
+                        data["animals"] = serializer.serializeProperty(animals);
 
                         return data;
                     },
