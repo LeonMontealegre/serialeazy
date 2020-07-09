@@ -107,15 +107,7 @@ describe("Test Suite", () => {
 
         const t_copy = Deserialize<Test>(str);
 
-        expect(t_copy.things).toHaveLength(t.things.length);
-        expect(t_copy.things[0]).toEqual(t.things[0]);
-        expect(t_copy.things[1]).toEqual(t.things[1]);
-        expect(t_copy.things[3]).toEqual(t.things[3]);
-        expect(t_copy.things[5]).toEqual(t.things[5]);
-
-        expect(t_copy.things[2].tag).toEqual(t.things[2].tag);
-        expect(t_copy.things[4].tag).toEqual(t.things[4].tag);
-        expect(t_copy.things[6].tag).toEqual(t.things[6].tag);
+        expect(t_copy.things).toEqual(t.things);
         expect(t_copy.things[7]).toEqual(t_copy.things[2]);
     })
     test(" 3 – Basic cyclical dependencies", () => {
@@ -224,11 +216,8 @@ describe("Test Suite", () => {
         const s1 = Array.from(t.things);
         const s2 = Array.from(t_copy.things);
 
-        expect(s2).toHaveLength(s1.length);
         expect(t_copy.things).toBeInstanceOf(Set);
-        expect(s2[0]).toEqual(s1[0]);
-        expect(s2[1]).toEqual(s1[1]);
-        expect(s2[4]).toEqual(s1[4]);
+        expect(s2).toEqual(s1);
 
         expect(s2[2]).toBeInstanceOf(Set);
         expect(s2[2].size).toEqual(s1[2].size);
@@ -250,12 +239,7 @@ describe("Test Suite", () => {
         const str = Serialize(t);
         const t_copy = Deserialize<Test6>(str);
 
-        expect(t_copy.arr).toHaveLength(t.arr.length);
-        expect(t_copy.arr[0]).toEqual(t.arr[0]);
-        expect(t_copy.arr[1]).toEqual(t.arr[1]);
-        expect(t_copy.arr[2]).toEqual(t.arr[2]);
-        expect(t_copy.arr[3]).toEqual(t.arr[3]);
-        expect(t_copy.arr[4]).toEqual(t.arr[4]);
+        expect(t_copy.arr).toEqual(t.arr);
         expect(t_copy.arr[2]).toBe(t_copy.arr[4]);
     });
     test(" 7 – Array of numbers", () => {
@@ -407,10 +391,7 @@ describe("Test Suite", () => {
         const ta_copy = Deserialize<Test12a>(str1);
         const tb_copy = Deserialize<Test12b>(str2);
 
-        expect(ta_copy.str).toEqual(ta.str);
-        expect(ta_copy.isOn).toEqual(ta.isOn);
-        expect(tb_copy.str).toEqual(tb.str);
-        expect(tb_copy.on).toEqual(tb.on);
+        expect(ta_copy).toEqual(ta);
         expect(tb_copy.isOn()).toEqual(tb.isOn());
     });
     test("13 – Custom class Create from Tag", () => {
