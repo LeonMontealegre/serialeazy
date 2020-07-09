@@ -5,10 +5,10 @@ const typeKey = "type";
 const dataKey = "data";
 
 type CustomBehavior<T> = {
-    customSerialization?: (serializer: Serializer, obj: T, refs: Map<Object, string>, root: any, custom: CustomSerialization<any>[]) => any;
+    customSerialization?: (serializer: Serializer, obj: T, refs: Map<Object, string>, root: RootType, custom: CustomSerialization<any>[]) => any;
     customConstruction?: (serializer: Serializer, data: any) => T,
     customKeyFilter?: (obj: T, key: string) => boolean,
-    customDeserialization?: (serializer: Serializer, obj: T, data: any, refs: Map<string, Object>, root: any) => void,
+    customDeserialization?: (serializer: Serializer, obj: T, data: any, refs: Map<string, Object>, root: RootType) => void,
     customPostDeserialization?: (obj: T) => void
 }
 
@@ -21,6 +21,14 @@ type CustomSerialization<T> = {
     type: Function,
     customBehavior: CustomBehavior<T>
 };
+
+type PrimitiveTypes = number | string | boolean;
+
+type Types = PrimitiveTypes | Entry;
+
+type Entry = {[typeKey]: string, [dataKey ]: Record<string, Types>} | PrimitiveTypes;
+
+type RootType = Record<string, Entry>;
 
 class Serializer {
     private serializableObjects: Map<string, SerializeProperties<any>>;
@@ -64,7 +72,7 @@ class Serializer {
         return keys;
     }
 
-    public defaultSerialization(obj: Object, refs: Map<Object, string>, root: any, custom: CustomSerialization<any>[] = []): any {
+    public defaultSerialization(obj: Object, refs: Map<Object, string>, root: RootType, custom: CustomSerialization<any>[] = []): any {
         const behavior = this.findCustomBehavior(obj, custom);
         // go through each key and serialize it
         const data = {};
@@ -74,7 +82,7 @@ class Serializer {
         return data;
     }
 
-    public serializeProperty(prop: any, refs: Map<Object, string>, root: any, custom: CustomSerialization<any>[] = []): any {
+    public serializeProperty(prop: any, refs: Map<Object, string>, root: RootType, custom: CustomSerialization<any>[] = []): any {
         // primitives should be trivially saved
         if (!(prop instanceof Object))
             return prop;
@@ -86,7 +94,7 @@ class Serializer {
         // TODO: add check for maps/sets/other built-ins
         throw new Error("Unknown property! " + prop.constructor.name);
     }
-    public serialize(obj: Object, refs: Map<Object, string>, root: any, custom: CustomSerialization<any>[] = []): boolean {
+    public serialize(obj: Object, refs: Map<Object, string>, root: RootType, custom: CustomSerialization<any>[] = []): boolean {
         const uuid = Reflect.getMetadata(uuidKey, obj.constructor.prototype);
         // if it's an unknown type, then we can't serialize it
         if (!uuid)
@@ -120,14 +128,14 @@ class Serializer {
         return new (this.get(uuid).constructor)();
     }
 
-    public defaultDeserialize(obj: any, data: any, refs: Map<string, Object>, root: any): void {
+    public defaultDeserialize(obj: any, data: any, refs: Map<string, Entry>, root: RootType): void {
         // Go through each key
         Object.keys(data).forEach((key => {
             obj[key] = this.deserializeProperty(data[key], refs, root);
         }));
     }
 
-    public deserializeProperty(prop: any, refs: Map<string, Object>, root: any): any {
+    public deserializeProperty(prop: any, refs: Map<string, Entry>, root: RootType): any {
         if (!(prop instanceof Object))
             return prop;
 
@@ -139,7 +147,7 @@ class Serializer {
         // TODO: add check for sets/other built-ins
         throw new Error(`Unknown property ${root[refNum][typeKey]}!`);
     }
-    public deserialize(num: string, refs: Map<string, Object>, root: any): boolean {
+    public deserialize(num: string, refs: Map<string, Entry>, root: RootType): boolean {
         // check if we already deserialized the given obj
         if (num == undefined || refs.has(num))
             return true;
@@ -194,7 +202,7 @@ export function Serialize(obj: any, custom: CustomSerialization<any>[] = []): st
     if (!(obj instanceof Object))
         return JSON.stringify({ "0": obj });
 
-    const root = {};
+    const root: RootType = {};
     serializer.serialize(obj, new Map<Object, string>(), root, custom);
     return JSON.stringify(root);
 }
@@ -212,15 +220,15 @@ export function GetConstructorFor<T>(uuid: string): new () => T {
 }
 
 export function Deserialize<T>(str: string): T {
-    const root = JSON.parse(str);
+    const root: RootType = JSON.parse(str);
     if ("0" in root && !(root["0"] instanceof Object))
-        return root["0"] as T;
+        return <unknown>root["0"] as T;
 
-    const map = new Map<string, Object>();
+    const map = new Map<string, Entry>();
 
     serializer.deserialize("0", map, root);
 
-    return map.get("0") as T;
+    return <unknown>map.get("0") as T;
 }
 
 export function addCustomBehavior<T>(uuid: string, newBehavior: CustomBehavior<T> = {}): void {
@@ -275,18 +283,18 @@ export function serializable<T>(uuid: string, customBehavior: CustomBehavior<T> 
 /**       Built-in objects setup         */
 /*****************************************/
 serializable("Array", {
-    customSerialization: (serializer: Serializer, obj: any[], refs: Map<Object, string>, root: any, custom: CustomSerialization<any>[] = []) => {
+    customSerialization: (serializer: Serializer, obj: any[], refs: Map<Object, string>, root: RootType, custom: CustomSerialization<any>[] = []) => {
         return obj.map((v) => serializer.serializeProperty(v, refs, root, custom));
     },
-    customDeserialization: (serializer: Serializer, obj: any[], data: any[], refs: Map<string, Object>, root: any) => {
+    customDeserialization: (serializer: Serializer, obj: any[], data: any[], refs: Map<string, Entry>, root: RootType) => {
         data.forEach((v) => obj.push(serializer.deserializeProperty(v, refs, root)));
     }
 })(Array);
 serializable("Set", {
-    customSerialization: (serializer: Serializer, obj: Set<any>, refs: Map<Object, string>, root: any, custom: CustomSerialization<any>[] = []) => {
+    customSerialization: (serializer: Serializer, obj: Set<any>, refs: Map<Object, string>, root: RootType, custom: CustomSerialization<any>[] = []) => {
         return Array.from(obj).map((v) => serializer.serializeProperty(v, refs, root, custom));
     },
-    customDeserialization: (serializer: Serializer, obj: Set<any>, data: any[], refs: Map<string, Object>, root: any) => {
+    customDeserialization: (serializer: Serializer, obj: Set<any>, data: any[], refs: Map<string, Entry>, root: RootType) => {
         data.forEach((v) => obj.add(serializer.deserializeProperty(v, refs, root)));
     }
 })(Set);

@@ -666,4 +666,39 @@ describe("Test Suite", () => {
         expect(t2.type).toEqual(t.type);
         expect(t2.data).toEqual(t.data);
     });
+    test.only("24 – Shorthand serialization", () => {
+        @serializable("Test24Vector")
+        class Vector {
+            x: number;
+            y: number;
+
+            public constructor(x: number = 0, y: number = 0) {
+                this.x = x;
+                this.y = y;
+            }
+        }
+
+        @serializable("Test24Transform")
+        class Transform {
+            pos: Vector;
+            size: Vector;
+            rotation: number;
+
+            public constructor(pos: Vector = new Vector(), size: Vector = new Vector(), rotation: number = 0) {
+                this.pos = pos;
+                this.size = size;
+                this.rotation = rotation;
+            }
+        }
+
+        const t = new Transform(new Vector(5, 5), new Vector(10, 8), 45);
+
+        const str = Serialize(t);
+
+        const json = JSON.parse(str);
+
+        console.log(json);
+
+        expect.anything();
+    })
 });
