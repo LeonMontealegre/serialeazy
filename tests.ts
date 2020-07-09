@@ -2,7 +2,42 @@ import "jest";
 import {inspect} from "util";
 import {serialize, serializable, Serialize, Deserialize, Create, addCustomBehavior} from "./index";
 
+
+// Useful common classes
+@serializable("Vector")
+class Vector {
+    x: number;
+    y: number;
+
+    public constructor(x: number = 0, y: number = 0) {
+        this.x = x;
+        this.y = y;
+    }
+}
+
+@serializable("Transform")
+class Transform {
+    pos: Vector;
+    size: Vector;
+    rotation: number;
+
+    public constructor(pos: Vector = new Vector(), size: Vector = new Vector(), rotation: number = 0) {
+        this.pos = pos;
+        this.size = size;
+        this.rotation = rotation;
+    }
+}
+
+
 describe("Test Suite", () => {
+    test(" 0 – Very basic class serialization", () => {
+        const t = new Transform(new Vector(2, 2), new Vector(3, 3), 25);
+
+        const str = Serialize(t);
+        const t_copy = Deserialize<Transform>(str);
+
+        expect(t).toEqual(t_copy);
+    });
     test(" 1 – Basic class serialization", () => {
         @serializable("C")
         class C {
@@ -69,6 +104,7 @@ describe("Test Suite", () => {
         t.things = ["0", 5, o1, "asd", o2, 324, o3, o1];
 
         const str = Serialize(t);
+
         const t_copy = Deserialize<Test>(str);
 
         expect(t_copy.things).toHaveLength(t.things.length);
@@ -630,8 +666,8 @@ describe("Test Suite", () => {
 
         addCustomBehavior("Test22", {
             customDeserialization: (_, obj: Test22, data) => {
-                obj.a = data.a;
-                obj.b = data.b;
+                obj.a = data["a"];
+                obj.b = data["b"];
             },
             customSerialization: (_, obj: Test22) => {
                 return {
@@ -666,39 +702,88 @@ describe("Test Suite", () => {
         expect(t2.type).toEqual(t.type);
         expect(t2.data).toEqual(t.data);
     });
-    test.only("24 – Shorthand serialization", () => {
-        @serializable("Test24Vector")
-        class Vector {
-            x: number;
-            y: number;
-
-            public constructor(x: number = 0, y: number = 0) {
-                this.x = x;
-                this.y = y;
-            }
-        }
-
-        @serializable("Test24Transform")
-        class Transform {
-            pos: Vector;
-            size: Vector;
-            rotation: number;
-
-            public constructor(pos: Vector = new Vector(), size: Vector = new Vector(), rotation: number = 0) {
-                this.pos = pos;
-                this.size = size;
-                this.rotation = rotation;
-            }
-        }
-
+    test("24 – Compressed serialization", () => {
         const t = new Transform(new Vector(5, 5), new Vector(10, 8), 45);
 
         const str = Serialize(t);
-
         const json = JSON.parse(str);
 
-        console.log(json);
+        expect(json).toEqual({
+            "0": {
+                type: "Transform",
+                data: {
+                    pos: { type: "Vector", data: { x: 5, y: 5 } },
+                    size: { type: "Vector", data: { x: 10, y: 8 } },
+                    rotation: 45
+                }
+            }
+        });
 
-        expect.anything();
-    })
+        const t_copy = Deserialize<Transform>(str);
+        expect(t).toEqual(t_copy);
+    });
+    test("25 – Multi-layer compressed serialization", () => {
+        @serializable("Test25Thing")
+        class Thing {
+            transform: Transform;
+
+            public constructor(transform: Transform = new Transform()) {
+                this.transform = transform;
+            }
+        }
+
+        const t = new Thing(new Transform(new Vector(5, 5), new Vector(10, 8), 45));
+
+        const str = Serialize(t);
+        const json = JSON.parse(str);
+
+        expect(json).toEqual({
+            "0": {
+                type: "Test25Thing",
+                data: {
+                    transform: {
+                        type: "Transform",
+                        data: {
+                            pos: { type: "Vector", data: { x: 5, y: 5 } },
+                            size: { type: "Vector", data: { x: 10, y: 8 } },
+                            rotation: 45
+                        }
+                    }
+                }
+            }
+        });
+
+        const t_copy = Deserialize<Thing>(str);
+        expect(t).toEqual(t_copy);
+    });
+    test("26 – Compressed array", () => {
+        const v = new Vector(7, 7);
+        const arr = [new Vector(5, 5), v, new Transform(new Vector(1, 2), v, 30), v];
+
+        const str = Serialize(arr);
+        const json = JSON.parse(str);
+
+        expect(json).toEqual({
+            "0": {
+                type: "Array",
+                data: [
+                    { type: "Vector", data: { x: 5, y: 5 } },
+                    { ref: "2" },
+                    {
+                        type: "Transform",
+                        data: {
+                            pos: { type: "Vector", data: { x: 1, y: 2 }},
+                            size: { ref: "2" },
+                            rotation: 30
+                        }
+                    },
+                    { ref: "2" }
+                ]
+            },
+            "2": { type: "Vector", data: { x: 7, y: 7 } }
+        });
+
+        const arr_copy = Deserialize<any[]>(str);
+        expect(arr).toEqual(arr_copy);
+    });
 });

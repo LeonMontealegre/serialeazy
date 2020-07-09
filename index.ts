@@ -4,11 +4,18 @@ const uuidKey = Symbol("__UUID__");
 const typeKey = "type";
 const dataKey = "data";
 
+type DataType = any;
+
+type Ref = {ref: string};
+type Wrapper = {[typeKey]: string, [dataKey]: DataType};
+type RootType = Record<string, DataType>;
+
+
 type CustomBehavior<T> = {
     customSerialization?: (serializer: Serializer, obj: T, refs: Map<Object, string>, root: RootType, custom: CustomSerialization<any>[]) => any;
-    customConstruction?: (serializer: Serializer, data: any) => T,
+    customConstruction?: (serializer: Serializer, data: DataType) => T,
     customKeyFilter?: (obj: T, key: string) => boolean,
-    customDeserialization?: (serializer: Serializer, obj: T, data: any, refs: Map<string, Object>, root: RootType) => void,
+    customDeserialization?: (serializer: Serializer, obj: T, data: DataType, refs: Map<string, Object>, root: RootType) => void,
     customPostDeserialization?: (obj: T) => void
 }
 
@@ -22,13 +29,14 @@ type CustomSerialization<T> = {
     customBehavior: CustomBehavior<T>
 };
 
-type PrimitiveTypes = number | string | boolean;
 
-type Types = PrimitiveTypes | Entry;
+function isRef(dataType: DataType): dataType is Ref {
+    return "ref" in dataType;
+}
+function isWrapper(dataType: DataType): dataType is Wrapper {
+    return typeKey in dataType && dataKey in dataType;
+}
 
-type Entry = {[typeKey]: string, [dataKey ]: Record<string, Types>} | PrimitiveTypes;
-
-type RootType = Record<string, Entry>;
 
 class Serializer {
     private serializableObjects: Map<string, SerializeProperties<any>>;
@@ -128,45 +136,21 @@ class Serializer {
         return new (this.get(uuid).constructor)();
     }
 
-    public defaultDeserialize(obj: any, data: any, refs: Map<string, Entry>, root: RootType): void {
+    public construct(uuid: string, data?: DataType) {
+        const customBehavior = this.get(uuid).customBehavior;
+        return (customBehavior.customConstruction ? customBehavior.customConstruction(this, data) : this.create(uuid));
+    }
+
+    public defaultDeserialize(obj: any, data: DataType, refs: Map<string, any>, root: RootType): void {
         // Go through each key
         Object.keys(data).forEach((key => {
             obj[key] = this.deserializeProperty(data[key], refs, root);
         }));
     }
 
-    public deserializeProperty(prop: any, refs: Map<string, Entry>, root: RootType): any {
-        if (!(prop instanceof Object))
-            return prop;
+    public deserialize(uuid: string, obj: any, data: DataType, refs: Map<string, any>, root: RootType): void {
+        const customBehavior = this.get(uuid).customBehavior;
 
-        // reference
-        const refNum = prop["ref"];
-        if (this.deserialize(refNum, refs, root))
-            return refs.get(refNum);
-
-        // TODO: add check for sets/other built-ins
-        throw new Error(`Unknown property ${root[refNum][typeKey]}!`);
-    }
-    public deserialize(num: string, refs: Map<string, Entry>, root: RootType): boolean {
-        // check if we already deserialized the given obj
-        if (num == undefined || refs.has(num))
-            return true;
-
-        // if it's an unknown type, then we can't deserialize it
-        const uuid = root[num][typeKey];
-        if (!this.serializableObjects.has(uuid))
-            return false;
-
-        const sObj = this.serializableObjects.get(uuid);
-        const customBehavior = sObj.customBehavior;
-
-        const data = root[num][dataKey];
-
-        // Construct object and then set it in map as reference
-        const obj = (customBehavior.customConstruction ? customBehavior.customConstruction(this, data) : this.create(uuid));
-        refs.set(num, obj);
-
-        // Custom deserialization
         if (customBehavior.customDeserialization) {
             customBehavior.customDeserialization(this, obj, data, refs, root);
         } else {
@@ -175,8 +159,43 @@ class Serializer {
 
         if (customBehavior.customPostDeserialization)
             customBehavior.customPostDeserialization(obj);
+    }
 
-        return true;
+    public deserializeWrapper(wrapper: Wrapper, refs: Map<string, any>, root: RootType, refNum?: string): any {
+        const {type, data} = <Wrapper>wrapper;
+        if (!this.has(type))
+            throw new Error(`Unknown data type ${type}!`);
+
+        const obj = this.construct(type, data);
+
+        if (refNum) // Add to references if given a reference number
+            refs.set(refNum, obj);
+
+        this.deserialize(type, obj, data, refs, root);
+
+        return obj;
+    }
+
+    public deserializeProperty(prop: DataType, refs: Map<string, any>, root: RootType): any {
+        if (!(prop instanceof Object))
+            return prop;
+
+        // reference
+        if (isRef(prop)) {
+            const refNum = prop["ref"];
+
+            // Check if we already deserialized the given obj
+            if (/*refNum == undefined || */refs.has(refNum))
+                return refs.get(refNum);
+
+            return this.deserializeWrapper(<Wrapper>root[refNum], refs, root, refNum);
+        }
+
+        // in-line object
+        if (isWrapper(prop))
+            return this.deserializeWrapper(<Wrapper>prop, refs, root);
+
+        throw new Error(`Unknown property ${prop}!`);
     }
 
     public has(uuid: string): boolean {
@@ -189,9 +208,43 @@ class Serializer {
 }
 const serializer = new Serializer();
 
+function compress(entry: DataType, root: RootType, counts: Map<string, number>): void {
+    if (!(entry instanceof Object))
+        return;
 
+    const data = entry[dataKey];
 
+    Object.keys(data).forEach((key2) => {
+        const val = data[key2];
+        if (val["ref"]) {
+            const ref = val["ref"];
+            if (counts.get(ref) == 1) {
+                compress(root[ref], root, counts);
+                data[key2] = root[ref];
+                delete root[ref];
+            }
+        }
+    });
+}
 
+function Compress(root: RootType): void {
+    const counts = new Map<string, number>();
+    Object.keys(root).forEach((key) => {
+        if (!counts.has(key))
+            counts.set(key, 1);
+
+        const data = root[key][dataKey];
+        Object.values(data).forEach((val) => {
+            if (val["ref"]) {
+                const ref = val["ref"];
+                if (!counts.has(ref))
+                    counts.set(ref, 0);
+                counts.set(ref, counts.get(ref) + 1);
+            }
+        });
+    });
+    compress(root["0"], root, counts);
+}
 
 
 
@@ -204,6 +257,9 @@ export function Serialize(obj: any, custom: CustomSerialization<any>[] = []): st
 
     const root: RootType = {};
     serializer.serialize(obj, new Map<Object, string>(), root, custom);
+
+    Compress(root);
+
     return JSON.stringify(root);
 }
 
@@ -221,14 +277,15 @@ export function GetConstructorFor<T>(uuid: string): new () => T {
 
 export function Deserialize<T>(str: string): T {
     const root: RootType = JSON.parse(str);
-    if ("0" in root && !(root["0"] instanceof Object))
-        return <unknown>root["0"] as T;
+    if (!("0" in root))
+        return undefined;
 
-    const map = new Map<string, Entry>();
+    if (!(root["0"] instanceof Object))
+        return root["0"] as T;
 
-    serializer.deserialize("0", map, root);
+    const refs = new Map<string, DataType>();
 
-    return <unknown>map.get("0") as T;
+    return serializer.deserializeWrapper(root["0"], refs, root, "0") as T;
 }
 
 export function addCustomBehavior<T>(uuid: string, newBehavior: CustomBehavior<T> = {}): void {
@@ -286,7 +343,7 @@ serializable("Array", {
     customSerialization: (serializer: Serializer, obj: any[], refs: Map<Object, string>, root: RootType, custom: CustomSerialization<any>[] = []) => {
         return obj.map((v) => serializer.serializeProperty(v, refs, root, custom));
     },
-    customDeserialization: (serializer: Serializer, obj: any[], data: any[], refs: Map<string, Entry>, root: RootType) => {
+    customDeserialization: (serializer: Serializer, obj: any[], data: any[], refs: Map<string, any>, root: RootType) => {
         data.forEach((v) => obj.push(serializer.deserializeProperty(v, refs, root)));
     }
 })(Array);
@@ -294,7 +351,7 @@ serializable("Set", {
     customSerialization: (serializer: Serializer, obj: Set<any>, refs: Map<Object, string>, root: RootType, custom: CustomSerialization<any>[] = []) => {
         return Array.from(obj).map((v) => serializer.serializeProperty(v, refs, root, custom));
     },
-    customDeserialization: (serializer: Serializer, obj: Set<any>, data: any[], refs: Map<string, Entry>, root: RootType) => {
+    customDeserialization: (serializer: Serializer, obj: Set<any>, data: any[], refs: Map<string, any>, root: RootType) => {
         data.forEach((v) => obj.add(serializer.deserializeProperty(v, refs, root)));
     }
 })(Set);
