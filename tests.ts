@@ -1,6 +1,6 @@
 import "jest";
 import {inspect} from "util";
-import {serialize, serializable, Serialize, Deserialize, Create, addCustomBehavior} from "./src/index";
+import {serialize, serializable, Serialize, Deserialize, Create, addCustomBehavior, GetIDFor} from "./src/index";
 
 
 // Useful common classes
@@ -784,5 +784,41 @@ describe("Test Suite", () => {
         const t_copy = Deserialize<Test27>(Serialize(t));
 
         expect(t).toEqual(t_copy);
+    });
+    test("28 – GetIDFor", () => {
+        @serializable("Test28")
+        class Test28 {
+            thing: any;
+            num: number;
+
+            public constructor(thing?: any, num: number = 0) {
+                this.thing = thing;
+                this.num = num;
+            }
+        }
+
+        const t = new Test28();
+
+        expect(GetIDFor(t)).toEqual("Test28");
+    });
+    test("29 – GetIDFor Advanced", () => {
+        class Test29 {
+        }
+
+        @serializable("Test29a")
+        class Test29a extends Test29 {
+        }
+
+        @serializable("Test29b")
+        class Test29b extends Test29 {
+        }
+
+        expect(GetIDFor(new Test29())).toBeUndefined();
+        expect(GetIDFor(new Test29a())).toEqual("Test29a");
+        expect(GetIDFor(new Test29b())).toEqual("Test29b");
+
+        const objs: Test29[] = [new Test29a(), new Test29b()];
+        expect(GetIDFor(objs[0])).toEqual("Test29a");
+        expect(GetIDFor(objs[1])).toEqual("Test29b");
     });
 });

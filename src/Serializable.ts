@@ -39,7 +39,14 @@ export const SerializableObjects = (() => {
         },
         get(uuid: string): SerializeProperties<any> {
             return serializableObjects.get(uuid);
-        }
+        },
+        findID<T extends Object>(obj: T): string | undefined {
+            for (const [id, val] of Array.from(serializableObjects.entries())) {
+                if (val.constructor === obj.constructor)
+                    return id;
+            }
+            return undefined;
+        },
     };
 })();
 

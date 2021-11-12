@@ -36,6 +36,10 @@ export function GetConstructorFor<T>(uuid: string): new () => T {
     return SerializableObjects.get(uuid).constructor;
 }
 
+export function GetIDFor<T extends Object>(obj: T): string | undefined {
+    return SerializableObjects.findID(obj);
+}
+
 export function Deserialize<T>(str: string): T {
     const root: RootType = JSON.parse(str);
     if (!("0" in root))
