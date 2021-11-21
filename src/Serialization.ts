@@ -145,5 +145,10 @@ export function Compress(root: RootType): void {
         }
     }
 
-    compress(root["0"], root, counts);
+    // Loop through each key in the root and compress
+    const keys = Object.keys(root);
+    keys.forEach(key => {
+        if (key in root) // Double check since it could've been removed during a previous `compress`
+            compress(root[key], root, counts);
+    });
 }
