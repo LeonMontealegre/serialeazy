@@ -60,23 +60,28 @@ export class Serializer {
         if (!(prop instanceof Object))
             return prop;
 
-        // if object is a known type then save it as a reference
-        if (this.serialize(prop))
-            return { "ref": this.refs.get(prop) }
+        this.serialize(prop);
 
-        // TODO: add check for maps/sets/other built-ins
-        throw new Error("Unknown property! " + prop.constructor.name);
+        // save it as a reference
+        return { "ref": this.refs.get(prop) };
     }
 
-    public serialize(obj: Object): boolean {
-        const uuid = Reflect.getMetadata(uuidKey, obj.constructor.prototype);
-        // if it's an unknown type, then we can't serialize it
-        if (!uuid)
-            return false;
+    public serialize(obj: Object): void {
         // if we've already serialized the object then ignore
         if (this.refs.has(obj))
-            return true;
+            return;
         this.refs.set(obj, ""+this.refs.size);
+
+        const uuid = Reflect.getMetadata(uuidKey, obj.constructor.prototype);
+
+        // if it's an unknown type, attempt to serialize all the object's keys/values as a Record
+        if (!uuid) {
+            const data = {};
+            for (const key of Object.keys(obj))
+                data[key] = this.serializeProperty(obj[key]);
+            this.root[this.refs.get(obj)] = { type: "", data };
+            return;
+        }
 
         const newObj: Wrapper = { type: uuid, data: {} };
 
@@ -92,7 +97,6 @@ export class Serializer {
         }
 
         this.root[this.refs.get(obj)] = newObj;
-        return true;
     }
 
     public getRoot(): RootType {

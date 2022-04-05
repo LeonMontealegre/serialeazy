@@ -30,9 +30,13 @@ export class Deserializer {
     }
 
     public deserializeWrapper(wrapper: Wrapper, refNum?: string): any {
-        const {type, data} = <Wrapper>wrapper;
-        if (!SerializableObjects.has(type))
-            throw new Error(`Unknown data type ${type}!`);
+        const {type, data} = wrapper;
+        if (!SerializableObjects.has(type)) {
+            // Assume it's an unregistered Record, and do default deserialization
+            const obj = {};
+            this.defaultDeserialize(obj, data);
+            return obj;
+        }
 
         const obj = SerializableObjects.construct(type, data);
 

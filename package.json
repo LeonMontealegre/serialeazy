@@ -1,6 +1,6 @@
 {
   "name": "serialeazy",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "description": "An easy-to-use serialization library with support for references, type information, generics, inheritance, and more!",
   "keywords": [
     "serialization",

@@ -30,7 +30,7 @@ class Transform {
 
 
 describe("Test Suite", () => {
-    test(" 0 – Very basic class serialization", () => {
+    test(" 0 - Very basic class serialization", () => {
         const t = new Transform(new Vector(2, 2), new Vector(3, 3), 25);
 
         const str = Serialize(t);
@@ -38,7 +38,7 @@ describe("Test Suite", () => {
 
         expect(t).toEqual(t_copy);
     });
-    test(" 1 – Basic class serialization", () => {
+    test(" 1 - Basic class serialization", () => {
         @serializable("C")
         class C {
             @serialize tag: string;
@@ -83,7 +83,7 @@ describe("Test Suite", () => {
         expect(a1_copy.connection).toBe(a2_copy.connection);
         expect(c_copy.doThing()).toEqual(c.doThing());
     });
-    test(" 2 – Array of mixed references and custom classes", () => {
+    test(" 2 - Array of mixed references and custom classes", () => {
         @serializable("Test")
         class Test {
             @serialize things: any[];
@@ -110,7 +110,7 @@ describe("Test Suite", () => {
         expect(t_copy.things).toEqual(t.things);
         expect(t_copy.things[7]).toEqual(t_copy.things[2]);
     })
-    test(" 3 – Basic cyclical dependencies", () => {
+    test(" 3 - Basic cyclical dependencies", () => {
         @serializable("Test2")
         class Test2 {
             @serialize child: Test3;
@@ -130,7 +130,7 @@ describe("Test Suite", () => {
 
         expect(t2_copy.child.parent).toBe(t2_copy);
     });
-    test(" 4 – Complex cyclical graph", () => {
+    test(" 4 - Complex cyclical graph", () => {
         @serializable("Root")
         class Root {
             @serialize name: string;
@@ -194,7 +194,7 @@ describe("Test Suite", () => {
 
         expect(inspect(root, {colors: true, depth: 15})).toEqual(inspect(root_copy, {colors: true, depth: 15}));
     });
-    test(" 5 – Sets", () => {
+    test(" 5 - Sets", () => {
         @serializable("Test5")
         class Test5 {
             @serialize things: Set<any>;
@@ -225,7 +225,7 @@ describe("Test Suite", () => {
         expect(s2[3]).toBeInstanceOf(Array);
         expect(s2[3]).toHaveLength(s1[3].length);
     });
-    test(" 6 – Array of mixed types with other arrays and references", () => {
+    test(" 6 - Array of mixed types with other arrays and references", () => {
         @serializable("Test6")
         class Test6 {
             @serialize arr: Array<any>;
@@ -242,13 +242,13 @@ describe("Test Suite", () => {
         expect(t_copy.arr).toEqual(t.arr);
         expect(t_copy.arr[2]).toBe(t_copy.arr[4]);
     });
-    test(" 7 – Array of numbers", () => {
+    test(" 7 - Array of numbers", () => {
         const str = Serialize([1,2,3,4]);
         const arr = Deserialize<Array<number>>(str);
 
         expect(arr).toEqual([1,2,3,4]);
     });
-    test(" 8 – Array of mixed types and cyclical references", () => {
+    test(" 8 - Array of mixed types and cyclical references", () => {
         const a1 = [1,2,3,4];
         const str = Serialize([1, "asd", 4, a1, 7, a1]);
         const arr = Deserialize<Array<any>>(str);
@@ -263,7 +263,7 @@ describe("Test Suite", () => {
 
         expect(arr[3]).toBe(arr[5]);
     });
-    test(" 9 – Classes with arrays of differing types", () => {
+    test(" 9 - Classes with arrays of differing types", () => {
         @serializable("Test9asd")
         class Test9 {
             // @serialize
@@ -301,7 +301,7 @@ describe("Test Suite", () => {
 
         expect(t2_copy.list).toEqual(t2.list);
     });
-    test("10 – Reference to Serializable Constructor", () => {
+    test("10 - Reference to Serializable Constructor", () => {
         @serializable("Test10")
         class Test10 {
             cons: new (s: string) => Test10b;
@@ -329,7 +329,7 @@ describe("Test Suite", () => {
         expect(t_copy.newThing()).toBeInstanceOf(Test10b);
         expect(t_copy.newThing().s).toEqual("asd");
     });
-    test("11 – Generic class", () => {
+    test("11 - Generic class", () => {
         @serializable("Test11")
         class Test11<T> {
             thing: T;
@@ -350,7 +350,7 @@ describe("Test Suite", () => {
         expect(t1_copy.thing).toEqual(t1.thing);
         expect(t2_copy.thing).toEqual(t2.thing);
     });
-    test("12 – 2 Custom classes", () => {
+    test("12 - 2 Custom classes", () => {
         class Test12 {
             @serialize
             str: string;
@@ -394,7 +394,7 @@ describe("Test Suite", () => {
         expect(ta_copy).toEqual(ta);
         expect(tb_copy.isOn()).toEqual(tb.isOn());
     });
-    test("13 – Custom class Create from Tag", () => {
+    test("13 - Custom class Create from Tag", () => {
         @serializable("Test13")
         class Test13 {
             @serialize
@@ -411,12 +411,12 @@ describe("Test Suite", () => {
         expect(t).toBeInstanceOf(Test13);
         expect(t.doThing()).toEqual("Hi asd");
     });
-    test("14 – Number", () => {
+    test("14 - Number", () => {
         const num = Deserialize<number>(Serialize(5));
 
         expect(num).toBe(5);
     });
-    test("15 – Array w/ itself in it", () => {
+    test("15 - Array w/ itself in it", () => {
         const arr: any[] = [1,2];
         arr.push(arr);
 
@@ -427,14 +427,14 @@ describe("Test Suite", () => {
         expect(arr_copy[1]).toEqual(arr[1]);
         expect(arr_copy[2]).toBe(arr_copy);
     });
-    test("16 – Date", () => {
+    test("16 - Date", () => {
         const date = new Date();
 
         const date2 = Deserialize<Date>(Serialize(date));
 
         expect(date.getTime()).toEqual(date2.getTime());
     });
-    test("17 – Custom Serialization Key Filter", () => {
+    test("17 - Custom Serialization Key Filter", () => {
         class DontSerializeMe {
             info: string;
         }
@@ -468,7 +468,7 @@ describe("Test Suite", () => {
         expect(s2.other).toBeUndefined();
         expect(s2.data).toEqual(s.data);
     });
-    test("18 – Custom Serialization Advanced", () => {
+    test("18 - Custom Serialization Advanced", () => {
         type AnimalType = "Land" | "Aquatic";
 
         @serializable("Test18")
@@ -543,7 +543,7 @@ describe("Test Suite", () => {
         expect(landZoo.getAnimals()[1].getTag()).toEqual("Cow");
         expect(landZoo.getAnimals()[2].getTag()).toEqual("Leopard");
     });
-    test("19 – Serialize certain properties", () => {
+    test("19 - Serialize certain properties", () => {
         @serializable("Test19")
         class Test19 {
             @serialize
@@ -570,7 +570,7 @@ describe("Test Suite", () => {
         expect(test192.prop2).toEqual("default 2");
         expect(test192.prop3).toEqual(test19.prop3);
     });
-    test("20 – Don't Serialize certain properties", () => {
+    test("20 - Don't Serialize certain properties", () => {
         @serializable("Test20")
         class Test20 {
             public prop1: string;
@@ -594,7 +594,7 @@ describe("Test Suite", () => {
         expect(test202.prop2).toEqual("default 2");
         expect(test202.prop3).toEqual(test20.prop3);
     });
-    test("21 – Mix between serializing and not certain properties", () => {
+    test("21 - Mix between serializing and not certain properties", () => {
         @serializable("Test21")
         class Test21 {
             @serialize(true)
@@ -624,7 +624,7 @@ describe("Test Suite", () => {
         expect(test212.prop4).not.toEqual(test21.prop4);
         expect(test212.prop4).toEqual("default 4");
     });
-    test("22 – Add Custom Behavior", () => {
+    test("22 - Add Custom Behavior", () => {
         @serializable("Test22", {
             customDeserialization: (_, obj: Test22) => {
                 obj.a = "asd";
@@ -662,7 +662,7 @@ describe("Test Suite", () => {
         expect(tt1_copy2.a).toEqual("aa22");
         expect(tt1_copy2.b).toEqual("bb");
     });
-    test("23 – Class with edge-case variable names", () => {
+    test("23 - Class with edge-case variable names", () => {
         @serializable("Test23")
         class Test23 {
             uuid: number;
@@ -683,7 +683,7 @@ describe("Test Suite", () => {
         expect(t2.type).toEqual(t.type);
         expect(t2.data).toEqual(t.data);
     });
-    test("24 – Compressed serialization", () => {
+    test("24 - Compressed serialization", () => {
         const t = new Transform(new Vector(5, 5), new Vector(10, 8), 45);
 
         const str = Serialize(t);
@@ -703,7 +703,7 @@ describe("Test Suite", () => {
         const t_copy = Deserialize<Transform>(str);
         expect(t).toEqual(t_copy);
     });
-    test("25 – Multi-layer compressed serialization", () => {
+    test("25 - Multi-layer compressed serialization", () => {
         @serializable("Test25Thing")
         class Thing {
             transform: Transform;
@@ -737,7 +737,7 @@ describe("Test Suite", () => {
         const t_copy = Deserialize<Thing>(str);
         expect(t).toEqual(t_copy);
     });
-    test("26 – Compressed array", () => {
+    test("26 - Compressed array", () => {
         const v = new Vector(7, 7);
         const arr = [new Vector(5, 5), v, new Transform(new Vector(1, 2), v, 30), v];
 
@@ -767,7 +767,7 @@ describe("Test Suite", () => {
         const arr_copy = Deserialize<any[]>(str);
         expect(arr).toEqual(arr_copy);
     });
-    test("27 – Undefined", () => {
+    test("27 - Undefined", () => {
         @serializable("Test27")
         class Test27 {
             thing: any;
@@ -785,7 +785,7 @@ describe("Test Suite", () => {
 
         expect(t).toEqual(t_copy);
     });
-    test("28 – GetIDFor", () => {
+    test("28 - GetIDFor", () => {
         @serializable("Test28")
         class Test28 {
             thing: any;
@@ -801,7 +801,7 @@ describe("Test Suite", () => {
 
         expect(GetIDFor(t)).toEqual("Test28");
     });
-    test("29 – GetIDFor Advanced", () => {
+    test("29 - GetIDFor Advanced", () => {
         class Test29 {
         }
 
@@ -820,5 +820,36 @@ describe("Test Suite", () => {
         const objs: Test29[] = [new Test29a(), new Test29b()];
         expect(GetIDFor(objs[0])).toEqual("Test29a");
         expect(GetIDFor(objs[1])).toEqual("Test29b");
+    });
+    test("30 - Record Property", () => {
+        @serializable("Test30")
+        class Test30 {
+            props: Record<string, string>;
+        }
+
+        const t30 = new Test30();
+        t30.props = { "key1": "value1", "key2": "value2" };
+
+        const str1 = Serialize(t30);
+
+        const t30_copy = Deserialize<Test30>(str1);
+
+        expect(t30_copy.props).not.toBeUndefined();
+        expect(t30_copy.props).toHaveProperty("key1");
+        expect(t30_copy.props).toHaveProperty("key2");
+        expect(t30_copy.props["key1"]).toEqual("value1");
+        expect(t30_copy.props["key2"]).toEqual("value2");
+    });
+    test("31 - Inline record", () => {
+        const t31 = { "key1": "value1", "key2": "value2" };
+
+        const str1 = Serialize(t31);
+
+        const t31_copy = Deserialize<typeof t31>(str1);
+
+        expect(t31_copy).toHaveProperty("key1");
+        expect(t31_copy).toHaveProperty("key2");
+        expect(t31_copy["key1"]).toEqual("value1");
+        expect(t31_copy["key2"]).toEqual("value2");
     });
 });
